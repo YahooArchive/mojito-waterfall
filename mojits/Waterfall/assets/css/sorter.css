@@ -1,0 +1,39 @@
+table.sort {
+    width: 100%;
+    cursor: pointer;
+}
+
+table.sort td.title {
+    float: left;
+    margin-right: 15px;
+}
+
+table.sort td.arrows {
+    font-size: 11px;
+    width: 11px;
+}
+
+table.sort td.arrows .up {
+    margin-bottom: -3px;
+    margin-top: -4px;
+}
+
+table.sort td.arrows .down {
+    margin-bottom: -3px;
+    margin-top: -4px;
+}
+
+table.sort td.arrows .down,  table.sort td.arrows .up {
+    opacity: 0.2;
+}
+table.sort.disabled td.arrows {
+    display: none;
+}
+
+table.sort.asc td.arrows .down {
+    opacity: 0.7;
+}
+
+table.sort.desc td.arrows .up {
+    opacity: 0.7;
+}

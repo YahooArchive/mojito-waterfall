@@ -1,0 +1,41 @@
+{
+    "name": "mojito-waterfall",
+    "version": "0.0.1",
+    "description": "Performance Data Gathering and Visualization",
+    "author": "Albert Jimenez <jimenez@yahoo-inc.com>",
+    "main": "Waterfall",
+    "engines": {
+        "node": "> 0.10",
+        "npm": "> 1.2",
+        "mojito": "> 0.8"
+    },
+    "dependencies": {
+        "yui": "*"
+    },
+    "devDependencies": {
+        "mojito": "0.8.x",
+        "mojito-cli": "0.1.x",
+        "jsdom": "0.2.1"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git://github.com/yahoo/mojito-waterfall.git"
+    },
+    "bugs": "https://github.com/yahoo/mojito-waterfall/issues",
+    "licenses": [
+        {
+            "type": "BSD",
+            "url": "https://github.com/yahoo/mojito-waterfall/blob/master/LICENSE.txt"
+        }
+    ],
+    "yahoo": {
+        "mojito": {
+            "type": "bundle"
+        }
+    },
+    "scripts": {
+        "pretest": "mojito jslint app",
+        "test": "istanbul cover --yui=true --dir=artifacts/test/coverage ./node_modules/.bin/mojito -- test app .",
+        "posttest": "istanbul check-coverage --statements 80 --branches 60 --lines 80 --functions 80"
+    }
+}

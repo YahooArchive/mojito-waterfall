@@ -1,0 +1,25 @@
+YUI.add('waterfall-controller', function (Y, NAME) {
+    'use strict';
+
+    Y.mojito.controllers[NAME] = {
+
+        index: function (ac) {
+            ac.data.set('waterfall', ac.params.getFromBody('waterfall'));
+
+            ac.assets.addCss('./css/sorter.css');
+            ac.assets.addCss('./css/waterfall_popup.css');
+            ac.assets.addCss('./css/waterfall_summary.css');
+            ac.assets.addCss('./css/waterfall_ruler.css');
+            ac.assets.addCss('./css/waterfall_table.css');
+
+            ac.done();
+        }
+    };
+
+}, '0.0.1', {
+    requires: [
+        'mojito-data-addon',
+        'mojito-params-addon',
+        'mojito-assets-addon'
+    ]
+});
