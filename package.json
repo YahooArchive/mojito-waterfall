@@ -3,7 +3,7 @@
     "version": "0.0.1",
     "description": "Performance Data Gathering and Visualization",
     "author": "Albert Jimenez <jimenez@yahoo-inc.com>",
-    "main": "Waterfall",
+    "main": "waterfall",
     "engines": {
         "node": "> 0.10",
         "npm": "> 1.2",
