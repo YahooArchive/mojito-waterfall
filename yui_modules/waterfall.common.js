@@ -1,33 +1,36 @@
 /*jslint node: true, regexp: true, nomen: true, evil: true, plusplus: true */
 /*global YUI, escape */
 
-YUI.add('waterfall', function (Y, NAME) {
+YUI.add('mojito-waterfall', function (Y, NAME) {
     'use strict';
 
-    var PROFILE_KEY_REGEX = /^(\^?\s*[^\^:\~]+(:[^\^:\~]+)*)?(~[^\^~:]+)?$/,
+    var PROFILE_KEY_REGEX = /^(\/?[^\/:]+)+(\/[^\/:]+)*(:[^\/:]+)?$/, ///^(\^?\s*[^\^:\~]+(:[^\^:\~]+)*)?(~[^\^~:]+)?$/,
         STATS_TYPES = ['Name', 'Calls', 'Total Duration', 'Avg Duration', 'Min Duration', 'Max Duration'],
-        WaterfallNamespace = Y.namespace('Waterfall');
+        WaterfallNamespace = Y.namespace('mojito.Waterfall'),
+        isBrowser = typeof window === 'object';
 
     function ProfileKey(key) {
         this.profiles = [];
         this.duration = null;
 
-        key = key.trim();
-        if (key.indexOf('^') === 0) {
+        if (key.indexOf('/') === 0) {
             this.root = true;
-            key = key.replace('^', '');
+            key = key.replace('/', '');
         }
 
-        this.profiles = key.split(/\s*:\s*/);
+        this.profiles = key.split('/');
+        Y.Array.each(this.profiles, function (profile, i) {
+            this.profiles[i] = profile.trim();
+        }.bind(this));
 
-        if (this.profiles[this.profiles.length - 1].indexOf('~') !== -1) {
-            var split = this.profiles[this.profiles.length - 1].split('~');
+        if (this.profiles[this.profiles.length - 1].indexOf(':') !== -1) {
+            var split = this.profiles[this.profiles.length - 1].split(':');
             this.profiles[this.profiles.length - 1] = split[0].trim();
             this.duration = split[1].trim();
         }
 
         this.toString = function () {
-            this.str = this.str || this.profiles.join(': ') + (this.duration ? ' ~ ' + this.duration : '');
+            this.str = this.str || (this.root ? '/' : '') + this.profiles.join('/') + (this.duration ? ':' + this.duration : '');
             return this.str;
         };
     }
@@ -48,7 +51,6 @@ YUI.add('waterfall', function (Y, NAME) {
                 profiles: profileKey.profiles.slice(1),
                 duration: profileKey.duration
             }, root)];
-
         }
 
         if (profileKey.duration) {
@@ -58,6 +60,13 @@ YUI.add('waterfall', function (Y, NAME) {
     }
 
     Profile.prototype = {
+        compareTo: isBrowser ? function (otherProfile) {
+            return this.startTime > otherProfile.startTime ? 1 : this.startTime < otherProfile.startTime ? -1 : 0;
+        } : function (otherProfile) {
+            var i = this.startTime[0] === otherProfile.startTime[0] ? 1 : 0;
+            return this.startTime[i] > otherProfile.startTime[i] ? 1 : this.startTime[i] < otherProfile.startTime[i] ? -1 : 0;
+        },
+
         set: function (setData) {
             // find profile
             var profile = this.profile;
@@ -97,42 +106,55 @@ YUI.add('waterfall', function (Y, NAME) {
             lastProfile = profileArray[profileArray.length - 1];
 
             // if last profile is open and the profile to be added had children then continue through it
+            //if (lastProfile.startTime === undefined && !Y.Object.isEmpty(profile.children) {
             if (lastProfile.startTime === undefined && !Y.Object.isEmpty(profile.children)) {
                 Y.Object.each(profile.children, function (childProfileArray) {
                     Y.Array.each(childProfileArray, function (childProfile) {
                         self.add(childProfile, lastProfile);
                     });
                 });
+            } else if (lastProfile.startTime === undefined) {
+                lastProfile.startTime = profile.startTime;
+                lastProfile.endTime = profile.endTime;
             } else {
                 profileArray.push(profile);
             }
         }
     };
 
-    Y.Waterfall = function (config) {
+    function Waterfall(config) {
         this.config = config;
         this.headers = config && config.headers;
+        this.events = [];
         this.stats = {};
+
         this._calls = [];
         this._warnings = [];
-        this.events = [];
         this._timeProfiles = [{
             details: {}
         }];
 
-        this._stats = {};
-    };
+        this._now = isBrowser ? ((window.performance && (
+            window.performance.now    ||
+            window.performance.mozNow ||
+            window.performance.msNow  ||
+            window.performance.oNow   ||
+            window.performance.webkitNow
+        )) || function () {
+            return new Date().getTime();
+        }) : process.hrtime;
+    }
 
-    Y.mix(Y.Waterfall, WaterfallNamespace);
+    Waterfall.prototype = {
 
-
-
-    Y.Waterfall.prototype = {
+        configure: function (config) {
+            Y.mix(this.config, config, true, null, 0, true);
+        },
 
         start: function (profileKey, data) {
             this._calls.push({
                 profileKey: profileKey,
-                time: process.hrtime(),
+                time: this._now(),
                 data: data,
                 type: 'start'
             });
@@ -140,7 +162,7 @@ YUI.add('waterfall', function (Y, NAME) {
 
         end: function (profileKey, data) {
             this._calls.push({
-                time: process.hrtime(),
+                time: this._now(),
                 profileKey: profileKey,
                 data: data,
                 type: 'end'
@@ -149,19 +171,18 @@ YUI.add('waterfall', function (Y, NAME) {
 
         event: function (name, data) {
             this._calls.push({
-                time: process.hrtime(),
+                time: this._now(),
                 type: 'event',
                 data: data,
                 name: name
             });
         },
 
-
         clear: function () {
             this._calls = [];
         },
 
-        stop: function () {
+        pause: function () {
             this._originalStart = this._originalStart || this.start;
             this._originalEnd = this._originalEnd || this.end;
             this._originalEvent = this._originalEvent || this.event;
@@ -179,25 +200,27 @@ YUI.add('waterfall', function (Y, NAME) {
             delete this._originalEvent;
         },
 
-        get: function () {
+        getGui: function () {
             var waterfall = this.waterfall,
                 self = this,
                 createRows,
-                statsTopExpression = this.config && this.config.stats && this.config.stats.top;
+                statsTopExpression = this.config && this.config.stats && this.config.stats.top,
+                profileFilterExpression = this.config && this.config.stats && this.config.stats.profileFilter;
 
             if (waterfall) {
                 return waterfall;
             }
 
+            this._disable();
+
             this._processCalls();
 
             self.absoluteEndTime = 0;
-            self.absoluteStartTime = self.absoluteStartTime || 0;
 
             waterfall = {
                 headers: this.headers || [],
                 rows: [],
-                units: 'ns',
+                units: isBrowser ? 'ms' : 'ns',
                 events: [],
                 summary: {}
             };
@@ -208,11 +231,11 @@ YUI.add('waterfall', function (Y, NAME) {
             }
 
             createRows = function (profile, rows, topProfile, ancestors) {
-                var row = {
-                        durations: []
-                    },
+                var row = profile.data || {},
                     totalTime,
                     totalDuration = 0;
+
+                row.durations =  [];
 
                 profile.startTime = self._normalize(profile.startTime);
                 profile.endTime = self._normalize(profile.endTime);
@@ -262,24 +285,23 @@ YUI.add('waterfall', function (Y, NAME) {
 
                         newAncestors[profile.name] = true;
 
-                        childProfile.data.Name = childProfile.data.Name || childProfile.name + (index > 0 ? ' (' + (index + 1) + ')' : '');
-
-                        if (topExpression) {
-                            Y.Object.each(childProfile.data, function (value, key) {
-                                value = typeof value === 'string' ? '\'' + value + '\'' : value;
-                                topExpression = topExpression.replace(new RegExp(key, 'g'), value);
-                            });
-                            try {
-                                newTopProfile = eval(topExpression) ? childProfile : null;
-                            } catch (e) {
-                                newTopProfile = null;
-                            }
+                        if (self._executeExpression(topExpression, childProfile.data)) {
+                            newTopProfile = childProfile;
                         }
+
                         newTopProfile = newTopProfile || topProfile || childProfile;
 
                         childRow = createRows(childProfile, row.details, newTopProfile, newAncestors);
                         profileStartTime = profileStartTime !== undefined ? profileStartTime : childRow.startTime;
                         profileEndTime = childRow.endTime;
+                    });
+
+                    // Sort the array by start time and name profiles by index
+                    profileArray.sort(function (a, b) {
+                        return a.startTime > b.startTime ? 1 : a < b.startTime ? -1 : 0;
+                    });
+                    Y.Array.each(profileArray, function (childProfile, index) {
+                        childProfile.data.Name = childProfile.data.Name || childProfile.name + (profileArray.length > 1 ? ' (' + (index + 1) + ')' : '');
                     });
 
                     // update the entry's start and end time according to its children entries
@@ -301,7 +323,7 @@ YUI.add('waterfall', function (Y, NAME) {
                     });
                 }
 
-                Y.mix(row, profile.data);
+    //Y.mix(row, profile.data);
                 row.startTime = profile.startTime;
                 row.endTime = profile.endTime;
                 if (row.details.length === 0) {
@@ -310,14 +332,16 @@ YUI.add('waterfall', function (Y, NAME) {
                 rows.push(row);
 
                 // add stat
-                self.stats[profile.name] = self.stats[profile.name] || [];
-                self.stats[profile.name].push({
-                    topProfile: topProfile,
-                    profile: profile,
-                    startTime: profile.startTime,
-                    endTime: profile.endTime,
-                    hasAncestorOfSameType: ancestors[profile.name] !== undefined
-                });
+                if (self._executeExpression(profileFilterExpression, profile.data) !== false) {
+                    self.stats[profile.name] = self.stats[profile.name] || [];
+                    self.stats[profile.name].push({
+                        topProfile: topProfile,
+                        profile: profile,
+                        startTime: profile.startTime,
+                        endTime: profile.endTime,
+                        hasAncestorOfSameType: ancestors[profile.name] !== undefined
+                    });
+                }
 
                 self.absoluteEndTime = Math.max(self.absoluteEndTime, profile.endTime || 0);
                 return row;
@@ -342,7 +366,7 @@ YUI.add('waterfall', function (Y, NAME) {
             waterfall.summary = {
                 Timeline: escape('<div style="text-align:right">' +
                                 'Total Execution Time: ' +
-                                Y.Waterfall.Time.msTimeToString(self.absoluteEndTime / 1e6, 4) + '</div>')
+                                Y.mojito.Waterfall.Time.msTimeToString(self._timeToMs(self.absoluteEndTime), 4) + '</div>')
             };
 
             this.waterfall = waterfall;
@@ -351,7 +375,7 @@ YUI.add('waterfall', function (Y, NAME) {
         },
 
         getSummary: function () {
-            var waterfall = this.get(),
+            var waterfall = this.getGui(),
                 columnWidths = [],
                 i,
                 headerRow,
@@ -400,7 +424,7 @@ YUI.add('waterfall', function (Y, NAME) {
                 statStr += '\n' + row + '\n';
             });
 
-            statStr += 'Total Execution Time: ' + Y.Waterfall.Time.msTimeToString(this.absoluteEndTime / 1e6, 4) + '\n';
+            statStr += 'Total Execution Time: ' + Y.mojito.Waterfall.Time.msTimeToString(this._timeToMs(this.absoluteEndTime), 4) + '\n';
 
             return statStr;
         },
@@ -436,7 +460,8 @@ YUI.add('waterfall', function (Y, NAME) {
                     return;
                 }
 
-                if (!args.profileKey || !PROFILE_KEY_REGEX.test(args.profileKey.trim())) {
+                args.profileKey = args.profileKey.trim();
+                if (!args.profileKey || !PROFILE_KEY_REGEX.test(args.profileKey)) {
                     self._error("Invalid profile.", args.profileKey);
                     return;
                 }
@@ -467,30 +492,17 @@ YUI.add('waterfall', function (Y, NAME) {
                         });
 
                         profile.closed = true;
-
-                        if (i === 1) {
-                            stack.splice(i, 1);
-                            rootProfile.add(profile);
-                            return;
-                        }
+                        stack.splice(i, 1);
 
                         // leave this root profile in order to maintain start order
                         if (profileKey.root) {
-                            return;
+                            parent = stack[0];
+                        } else {
+                            parent = stack[i - 1];
                         }
 
-                        // find parent
-                        j = i - 1;
-                        do {
-                            parent = stack[j--];
-                        } while (parent.profileKey.root || parent.closed);
-
-                        // add closed profile to its parent if its parent is not closed or a 'root profile'
-                        // don't add to rootProfile because start order should be maintained
-                        if (!parent.closed && !parent.profileKey.root && parent !== rootProfile) {
-                            stack.splice(i, 1);
-                            parent.add(profile);
-                        }
+                        // add closed profile to its parent
+                        parent.add(profile);
                     } else {
                         // error
                         self._error('Start was never called.', profileKey);
@@ -513,8 +525,6 @@ YUI.add('waterfall', function (Y, NAME) {
                             rootProfile.add(childProfile);
                         });
                     });
-                } else {
-                    rootProfile.add(profile);
                 }
             });
 
@@ -526,8 +536,10 @@ YUI.add('waterfall', function (Y, NAME) {
         },
 
         _calcStats: function () {
-            var stats = {},
-                statsFilterExpression = this.config && this.config.stats && this.config.stats.filter,
+            var self = this,
+                stats = {},
+                msTimeToString = Y.mojito.Waterfall.Time.msTimeToString,
+                statsFilterExpression = this.config && this.config.stats && this.config.stats.statsFilter,
                 summarySorter = function (a, b) {
                     return b.Duration - a.Duration;
                 };
@@ -546,7 +558,6 @@ YUI.add('waterfall', function (Y, NAME) {
                         'Max Duration': 0,
                         summary: []
                     },
-                    filterExpression,
                     totalNonOverlappingDuration = 0,
                     totalDuration = 0,
                     minDuration = {},
@@ -580,32 +591,20 @@ YUI.add('waterfall', function (Y, NAME) {
                 stat['Max Duration'] = maxDuration.duration;
 
                 // determine whether to add stat based on config
-                if (statsFilterExpression) {
-                    filterExpression = statsFilterExpression;
-                    Y.Array.each(STATS_TYPES, function (s) {
-                        var value = typeof stat[s] === 'string' ? '\'' + stat[s] + '\'' : stat[s];
-                        filterExpression = filterExpression.replace(new RegExp(s, 'g'), value);
-                    });
-
-                    try {
-                        if (!eval(filterExpression)) {
-                            return;
-                        }
-                    } catch (e) {
-                        return;
-                    }
+                if (self._executeExpression(statsFilterExpression, stat) === false) {
+                    return;
                 }
 
-                stat['Total Duration'] = Y.Waterfall.Time.msTimeToString(stat['Total Duration'] / 1e6, 4);
-                stat['Avg Duration'] = Y.Waterfall.Time.msTimeToString(stat['Avg Duration'] / 1e6, 4);
-                stat['Min Duration'] = Y.Waterfall.Time.msTimeToString(stat['Min Duration'] / 1e6, 4) + ' (' + minDuration.name + ')';
-                stat['Max Duration'] = Y.Waterfall.Time.msTimeToString(stat['Max Duration'] / 1e6, 4) + ' (' + maxDuration.name + ')';
+                stat['Total Duration'] = msTimeToString(self._timeToMs(stat['Total Duration']), 4);
+                stat['Avg Duration'] = msTimeToString(self._timeToMs(stat['Avg Duration']), 4);
+                stat['Min Duration'] = msTimeToString(self._timeToMs(stat['Min Duration']), 4) + ' (' + minDuration.name + ')';
+                stat['Max Duration'] = msTimeToString(self._timeToMs(stat['Max Duration']), 4) + ' (' + maxDuration.name + ')';
 
                 // sort summary
                 stat.summary.sort(summarySorter);
                 // stringify durations
                 Y.Array.each(stat.summary, function (summary) {
-                    summary.Duration = Y.Waterfall.Time.msTimeToString(summary.Duration / 1e6, 4);
+                    summary.Duration = msTimeToString(self._timeToMs(summary.Duration), 4);
                 });
 
                 stats[statType] = stat;
@@ -613,19 +612,76 @@ YUI.add('waterfall', function (Y, NAME) {
             return stats;
         },
 
+        _timeToMs: function (time) {
+            return isBrowser ? time : time / 1e6;
+        },
+
         _normalize: function (time) {
             if (!time) {
                 return undefined;
             }
+
+            if (isBrowser) {
+                return time - this.absoluteStartTime;
+            }
+
             var ns = time[1] - this.absoluteStartTime[1],
                 s = time[0] - this.absoluteStartTime[0];
             return s * 1e9 + ns;
+        },
+
+        _disable: function () {
+            var disabled = function () {
+                this._error('Cannot continue profiling after the waterfall has been finalized.');
+            };
+            this.configure = this.start = this.end = this.event = this.clear = this.pause = this.resume = disabled;
+        },
+
+        _executeExpression: function (expression, values) {
+            var valueExpression,
+                variables,
+                i = 0;
+            // determine whether to add stat based on config
+            if (!expression) {
+                return null;
+            }
+
+            // get variables
+            variables = expression.split(/[^\d\w\s\'\"]/);
+            while (i < variables.length) {
+                variables[i] = variables[i].trim();
+                // remove empty variables and values
+                if (!variables[i] || /^((\d+)|(\'.*\')|(\".*\")|(true)|(false)|(null)|(undefined)|(NaN))$/.test(variables[i])) {
+                    variables.splice(i, 1);
+                    continue;
+                }
+                i++;
+            }
+            // sort by longest length first in case a variable name is a substring of another
+            variables.sort(function (a, b) {
+                return a.length > b.length ? -1 : a.length < b.length ? 1 : 0;
+            });
+
+            valueExpression = expression;
+            Y.Array.some(variables, function (v) {
+                var value = typeof values[v] === 'string' ? '\'' + values[v] + '\'' : values[v];
+                valueExpression = valueExpression.replace(new RegExp(v, 'g'), value);
+            });
+
+            try {
+                return eval(valueExpression);
+            } catch (e) {
+                Y.log('Error executing the expression "' + expression + '" = "' + valueExpression + '": ' + e.message, 'error', NAME);
+                return null;
+            }
         }
     };
 
+    Y.namespace('mojito').Waterfall = Waterfall;
+    Y.mix(Y.namespace('mojito').Waterfall, WaterfallNamespace);
+
 }, '0.1.0', {
     requires: [
-        'base',
-        'waterfall-time'
+        'mojito-waterfall-time'
     ]
 });

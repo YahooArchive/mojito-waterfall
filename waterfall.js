@@ -5,11 +5,11 @@ var YUI = require('yui').YUI,
 exports.Waterfall = YUI({
     useSync: true,
     modules: {
-        'waterfall': {
+        'mojito-waterfall': {
             fullpath: path.join(__dirname, './yui_modules/waterfall.common.js')
         },
-        'waterfall-time': {
-            fullpath: path.join(__dirname, './yui_modules/waterfall-time.common.js')
+        'mojito-waterfall-time': {
+            fullpath: path.join(__dirname, './yui_modules/time.common.js')
         }
     }
 }).use('waterfall').Waterfall;

@@ -1,10 +1,10 @@
 /*jslint plusplus: true */
 /*globals unescape */
 
-YUI.add('waterfall-gui', function (Y, NAME) {
+YUI.add('mojito-waterfall-gui', function (Y, NAME) {
     'use strict';
 
-    Y.namespace('Waterfall').GUI = function (data) {
+    Y.namespace('mojito.Waterfall').GUI = function (data) {
 
         var waterfall,
             waterfallData = data,
@@ -54,7 +54,7 @@ YUI.add('waterfall-gui', function (Y, NAME) {
 
                     var tr,
                         td,
-                        msTimeToString = Y.Waterfall.Time.msTimeToString;
+                        msTimeToString = Y.mojito.Waterfall.Time.msTimeToString;
 
                     // vertical space
                     table.append("<tr><td colspan='4' class='vertical-space'></td></tr>");
@@ -155,7 +155,7 @@ YUI.add('waterfall-gui', function (Y, NAME) {
 
                     // update time length
                     time = (Math.abs(left - mouseX) / timeLineWidthPx) * timeLineLengthMs;
-                    length.set("text", Y.Waterfall.Time.msTimeToString(time, 3));
+                    length.set("text", Y.mojito.Waterfall.Time.msTimeToString(time, 3));
                     length.setStyle("marginLeft", -1 * length.getStyle("width").replace("px", "") / 2);
                 };
 
@@ -239,15 +239,15 @@ YUI.add('waterfall-gui', function (Y, NAME) {
                 table.append(tbody);
 
                 // attach popup
-                popup = new Y.Waterfall.Popup(tbody, waterfall, function (popup, row) {
+                popup = new Y.mojito.Waterfall.Popup(tbody, waterfall, function (popup, row) {
                     var summary = rows[row].summary;
                     popup.set("innerHTML", "");
                     if (!summary || summary.length === 0) {
                         return;
                     }
-                    popupSummary = Y.Node.create("<table/>");
+                    popupSummary = Y.Node.create("<table cellspacing='10px' cellpadding='3px'/>");
                     // create header
-                    thead = Y.Node.create("<thead/>");
+                    thead = Y.Node.create("<thead/>").addClass('stat-popup');
                     tr = Y.Node.create("<tr/>");
                     Y.Array.each(Object.keys(summary[0]), function (header) {
                         th = Y.Node.create("<th>" + header + "</th>");
@@ -268,7 +268,7 @@ YUI.add('waterfall-gui', function (Y, NAME) {
                     });
                     popupSummary.append(tbody);
                     popup.append(popupSummary);
-                });
+                }, null, 'stat');
             },
 
             create = function (data, waterfallDomObject) {
@@ -290,8 +290,8 @@ YUI.add('waterfall-gui', function (Y, NAME) {
                     waterfallStats,
                     sortHeaders = [],
                     tableData = [],
-                    msTimeToString = Y.Waterfall.Time.msTimeToString,
-                    timeToMs = Y.Waterfall.Time.timeToMs,
+                    msTimeToString = Y.mojito.Waterfall.Time.msTimeToString,
+                    timeToMs = Y.mojito.Waterfall.Time.timeToMs,
                     createRow,
                     normalizeTimes,
                     getAbsoluteTimes,
@@ -712,5 +712,9 @@ YUI.add('waterfall-gui', function (Y, NAME) {
         waterfallDomObject = create(waterfallData);
     };
 }, '0.1.0', {requires: [
-    'node', 'transition', 'waterfall-time', 'event-outside', 'waterfall-popup'
+    'node',
+    'transition',
+    'event-outside',
+    'mojito-waterfall-time',
+    'mojito-waterfall-popup'
 ]});

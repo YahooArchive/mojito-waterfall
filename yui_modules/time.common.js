@@ -1,10 +1,10 @@
 /*jslint regexp: true */
 /*global YUI */
 
-YUI.add('waterfall-time', function (Y, NAME) {
+YUI.add('mojito-waterfall-time', function (Y, NAME) {
     'use strict';
 
-    Y.namespace('Waterfall').Time = {
+    Y.namespace('mojito.Waterfall').Time = {
 
         msTimeToString: function (time, sigFigures) {
             var units = "ms",

@@ -1,10 +1,12 @@
-YUI.add('waterfall-controller', function (Y, NAME) {
+YUI.add('mojito-waterfall-controller', function (Y, NAME) {
     'use strict';
 
     Y.mojito.controllers[NAME] = {
 
         index: function (ac) {
-            ac.data.set('waterfall', ac.params.getFromBody('waterfall'));
+            var data = ac.params.body('waterfall');
+
+            ac.data.set('waterfall', data);
 
             ac.assets.addCss('./css/sorter.css');
             ac.assets.addCss('./css/waterfall_popup.css');

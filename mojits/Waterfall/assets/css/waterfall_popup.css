@@ -13,3 +13,12 @@
     border-spacing: 2px;
     z-index: 2;
 }
+
+.waterfall .stat.popup table th {
+    color: #3f3f3f;
+    font-weight: bold;
+}
+
+.waterfall .stat.popup table td:not(:last-child) {
+    padding-right: 5px;
+}

@@ -2,7 +2,7 @@
     font-family: Arial, Helvetica, sans-serif;
     font-size: 12px;
     padding: 0;
-    margin: 0 6px 0 0;
+    margin: 0;
 }
 
 .waterfall > table thead, .waterfall > table tfoot {
@@ -171,6 +171,6 @@ table.timeline td {
 }
 
 .waterfall fieldset {
-    padding-right: 0;
-    margin-right: 6px;
+    padding: 3px 8px 8px 8px;
+    border: 2px groove threedface;
 }

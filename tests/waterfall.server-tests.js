@@ -1,12 +1,7 @@
-/*jslint node: true, nomen:true, unparam: true, indent: 4, plusplus: true, browser: true */
+/*jslint nomen: true */
 /*global YUITest, YUI */
 
-/*
- * ULT JavaScript Link Tracking Unit Tests.
- * Copyright (c) 2012 Yahoo! Inc. All rights reserved.
- */
-
-YUI.add('yahoo-utils-waterfall-tests', function (Y, NAME) {
+YUI.add('waterfall-tests', function (Y, NAME) {
     'use strict';
 
     var Assert = YUITest.Assert,
@@ -98,18 +93,18 @@ YUI.add('yahoo-utils-waterfall-tests', function (Y, NAME) {
 
             waterfall.start();
             waterfall.end();
-            waterfall.start('a ~ b ~ c');
-            waterfall.end('a ~ b ~ c');
-            waterfall.start('^a^');
-            waterfall.end('^a^');
-            waterfall.start('^~a');
-            waterfall.end('^~a');
-            waterfall.start('^:a');
-            waterfall.end('^:a');
-            waterfall.start(':a');
-            waterfall.end(':a');
-            waterfall.start('a:');
-            waterfall.end('a:');
+            waterfall.start('a:b:c');
+            waterfall.end('a:b:c');
+            waterfall.start('/a/');
+            waterfall.end('/a/');
+            waterfall.start('/:a');
+            waterfall.end('/:a');
+            waterfall.start('//a');
+            waterfall.end('//a');
+            waterfall.start('/a');
+            waterfall.end('/a');
+            waterfall.start('a/');
+            waterfall.end('a/');
 
             waterfall.end('a');
             waterfall.start('a');
@@ -191,15 +186,15 @@ YUI.add('yahoo-utils-waterfall-tests', function (Y, NAME) {
 
             waterfall.start('a');
             waterfall.start('b');
-            waterfall.start('b:c');
-            waterfall.start('d ~ e');
-            waterfall.end('d ~ e');
+            waterfall.start('b/c');
+            waterfall.start('d:e');
+            waterfall.end('d:e');
             waterfall.end('b');
-            waterfall.end('b:c');
-            waterfall.start('b ~ f');
-            waterfall.end('b ~ f');
-            waterfall.start('^x:y:z');
-            waterfall.end('^x:y:z');
+            waterfall.end('b/c');
+            waterfall.start('b:f');
+            waterfall.end('b:f');
+            waterfall.start('/x/y/z');
+            waterfall.end('/x/y/z');
             waterfall.end('a');
 
             waterfall.event('end');
