@@ -15,6 +15,7 @@
     "devDependencies": {
         "mojito": "0.8.x",
         "mojito-cli": "0.1.x",
+        "istanbul": "*",
         "jsdom": "0.2.1"
     },
     "repository": {

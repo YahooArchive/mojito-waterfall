@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2013, Yahoo! Inc. All rights reserved.
+ * Copyrights licensed under the New BSD License.
+ * See the accompanying LICENSE file for terms.
+ */
+
 .waterfall > table {
     font-family: Arial, Helvetica, sans-serif;
     font-size: 12px;
@@ -14,7 +20,6 @@
     background: -ms-linear-gradient(top,  rgba(242,244,246,1) 0%,rgba(221,221,221,1) 100%); /* IE10+ */
     background: linear-gradient(to bottom,  rgba(242,244,246,1) 0%,rgba(221,221,221,1) 100%); /* W3C */
     filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#f2f4f6', endColorstr='#dddddd',GradientType=0 ); /* IE6-9 */
-
 }
 
 .waterfall > table thead th {

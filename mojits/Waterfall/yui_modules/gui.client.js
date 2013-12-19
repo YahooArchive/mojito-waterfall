@@ -1,5 +1,11 @@
+/*
+ * Copyright (c) 2013, Yahoo! Inc. All rights reserved.
+ * Copyrights licensed under the New BSD License.
+ * See the accompanying LICENSE file for terms.
+ */
+
 /*jslint plusplus: true */
-/*globals unescape */
+/*global YUI, unescape */
 
 YUI.add('mojito-waterfall-gui', function (Y, NAME) {
     'use strict';
@@ -404,8 +410,6 @@ YUI.add('mojito-waterfall-gui', function (Y, NAME) {
                         tr.append(th);
                     });
 
-                    // append timeline header and set min-width if set
-                    //tr.append("<th style='min-width:" + (data.timelineMinWidth || 0) + "'>Timeline</th>");
                     thead.append(tr);
 
                     // sort rows by start time and get endTime
@@ -565,7 +569,6 @@ YUI.add('mojito-waterfall-gui', function (Y, NAME) {
                                 line = Y.Node.create("<div class='event-line' style='border-right:1px solid " + color +  "'/>");
                             line.setStyle("left", (100 * (event.time - startTime) / (endTime - startTime)) + "%");
                             // TODO: event lines seem to only be pushed to the right by 1 pixel when there are other lines
-                            //line.setStyle("marginLeft", (-1 * eventIndex));
                             line.setStyle("marginLeft", eventIndex > 0 ? -1 : 0);
                             event.color = color;
                             td.append(line);
@@ -602,8 +605,6 @@ YUI.add('mojito-waterfall-gui', function (Y, NAME) {
                         });
                         timeSliceDurationTextTd.append(timeSliceDurationText);
                         timeSliceTr.append(timeSliceDurationTextTd);
-                        //timeSliceDurationText.setStyle("left", ((100 * ((row.startTime + timeSliceDuration) - startTime) / (endTime - startTime)) + "%"));
-                        //lastTimeSliceTd.append(timeSliceDurationText);
 
                         summaries.push(summary);
 
@@ -611,10 +612,8 @@ YUI.add('mojito-waterfall-gui', function (Y, NAME) {
                         timeSlice.setStyle("width", Math.min(99.9999, 100 * timeSliceDuration / (endTime - startTime)) + "%");
 
                         // TODO: i dont think this is needed any more
-                        //timeSlice.setStyle("marginLeft", (-1 * numEvents));
                         timeSlice.setStyle("left", ((100 * (row.startTime - startTime) / (endTime - startTime)) + "%"));
                         timeSliceDurationText.append(msTimeToString(timeSliceDuration, 3));
-                        //not needed timeSlice.setStyle("marginLeft", (-1 * numEvents));
 
                         timeSlice.append(timeSliceTr);
 
@@ -639,12 +638,7 @@ YUI.add('mojito-waterfall-gui', function (Y, NAME) {
                         tbody.on('mouseoveroutside', function () {
                             waterfallRuler.end();
                         });
-                        /*tbody.on("mouseout", function (event) {
-                            if (tbody.contains(event.target)) {
-                                return;
-                            }
-                            waterfallRuler.end();
-                        });*/
+
                         tbody.on("mouseup", function (event) {
                             waterfallRuler.end();
                         });
@@ -652,7 +646,6 @@ YUI.add('mojito-waterfall-gui', function (Y, NAME) {
                         tr.append(td);
                         tableDataRow.columns.Timeline = row.startTime;
 
-                        //td.append(JSON.stringify(summary));
                         // hide rows that are not on the topmost level
                         if (depth > 0) {
                             tr.hide();
@@ -729,13 +722,14 @@ YUI.add('mojito-waterfall-gui', function (Y, NAME) {
             create(waterfallData, waterfallDomObject);
         };
 
-
         waterfallDomObject = create(waterfallData);
     };
-}, '0.1.0', {requires: [
-    'node',
-    'transition',
-    'event-outside',
-    'mojito-waterfall-time',
-    'mojito-waterfall-popup'
-]});
+}, '0.1.0', {
+    requires: [
+        'node',
+        'transition',
+        'event-outside',
+        'mojito-waterfall-time',
+        'mojito-waterfall-popup'
+    ]
+});
