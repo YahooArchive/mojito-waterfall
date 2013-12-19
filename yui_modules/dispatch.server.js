@@ -11,9 +11,8 @@ YUI.add('mojito-waterfall-dispatcher', function (Y, NAME) {
             return Y.mojito.Dispatcher.init.apply(this, arguments);
         },
 
-        _createActionContext: function (command, adapter) {
+        _createActionContext: function (command, adapter, id, type) {
             var ac,
-                name = command.instance.base || command.instance.type,
                 controllerName = Y.mojito.controllers[command.instance.controller],
                 controller = Y.mojito.util.heir(controllerName);
 
@@ -25,18 +24,18 @@ YUI.add('mojito-waterfall-dispatcher', function (Y, NAME) {
             // Note that creation of an ActionContext current causes
             // immediate invocation of the dispatch() call.
             try {
-                this.waterfall.start('/' + name + '/Create Action Context', {profileType: 'mojito'});
+                this.waterfall.start('/' + id + '/Create Action Context', {type: type, level: 'mojito'});
                 ac = new Y.mojito.Waterfall.ActionContext({
                     command: command,
                     controller: controller,
                     dispatcher: this,         // NOTE passing dispatcher.
                     adapter: adapter,
                     store: this.store
-                }, this.waterfall, name);
-                this.waterfall.end('/' + name + '/Create Action Context');
+                }, this.waterfall, id, type);
+                this.waterfall.end('/' + id + '/Create Action Context');
 
                 // Calling controller after action context creation.
-                this.waterfall.start('/' + name + '/Controller', {profileType: 'mojito'});
+                this.waterfall.start('/' + id + '/Controller', {type: type, level: 'mojito'});
                 controller[ac.action](ac);
             } catch (e) {
                 Y.log('Error from dispatch on instance \'' +
@@ -55,14 +54,15 @@ YUI.add('mojito-waterfall-dispatcher', function (Y, NAME) {
 
             var my = this,
                 store = this.store,
-                name = command.instance.base || command.instance.type,
+                id = command.instance.instanceId = command.instance.instanceId || Y.guid(),
+                type = command.instance.base || command.instance.type,
                 done = adapter.done;
 
-            my.waterfall.start('/' + name, {profileType: 'mojit'});
+            my.waterfall.start('/' + id, {type: type, level: 'mojit'});
 
             adapter.done = function () {
-                my.waterfall.end('/' + name + '/Render');
-                my.waterfall.end('/' + name);
+                my.waterfall.end('/' + id + '/Render');
+                my.waterfall.end('/' + id);
                 done.apply(this, arguments);
             }.bind(adapter);
 
@@ -82,11 +82,11 @@ YUI.add('mojito-waterfall-dispatcher', function (Y, NAME) {
                 return;
             }
 
-            my.waterfall.start('/' + name + '/Expand Instance', {profileType: 'mojito'});
+            my.waterfall.start('/' + id + '/Expand Instance', {type: type, level: 'mojito'});
             store.expandInstance(command.instance, command.context,
                 function (err, instance) {
 
-                    my.waterfall.end('/' + name + '/Expand Instance');
+                    my.waterfall.end('/' + id + '/Expand Instance');
 
                     // HookSystem::StartBlock
                     Y.mojito.hooks.hook('dispatch', adapter.hook, 'end', command);
@@ -109,7 +109,7 @@ YUI.add('mojito-waterfall-dispatcher', function (Y, NAME) {
                             command.instance.type + '].'));
                     } else {
                         // dispatching AC
-                        my._createActionContext(command, adapter);
+                        my._createActionContext(command, adapter, id, type);
                     }
                 });
         }

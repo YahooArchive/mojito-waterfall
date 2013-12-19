@@ -442,6 +442,26 @@ YUI.add('mojito-waterfall-gui', function (Y, NAME) {
                         startTime = Math.min(event.time, startTime);
                     });
 
+                    (function uniqueIds(rows) {
+                        var idHeader = data.headers[0],
+                            ids = {};
+                        if (!Y.Lang.isArray(rows)) {
+                            return;
+                        }
+                        Y.Array.each(rows, function (row) {
+                            var id = row[idHeader];
+                            ids[id] = ids[id] === undefined ? 0 : 1;
+                        });
+                        Y.Array.each(rows, function (row) {
+                            var id = row[idHeader];
+                            if (ids[id]) {
+                                row[idHeader] = id + ' (' + ids[id] + ')';
+                                ids[id]++;
+                            }
+                            uniqueIds(row.details);
+                        });
+                    }(data.rows));
+
                     // create body
                     createRow = function (row, depth, isLastChild) {
                         var timeSlice = Y.Node.create("<table class='gradient timeline'/>"),
@@ -587,7 +607,8 @@ YUI.add('mojito-waterfall-gui', function (Y, NAME) {
 
                         summaries.push(summary);
 
-                        timeSlice.setStyle("width", (100 * timeSliceDuration / (endTime - startTime)) + "%");
+                        // Make sure the width is not exactly 100%, otherwise some browsers will present the event lines above timeline.
+                        timeSlice.setStyle("width", Math.min(99.9999, 100 * timeSliceDuration / (endTime - startTime)) + "%");
 
                         // TODO: i dont think this is needed any more
                         //timeSlice.setStyle("marginLeft", (-1 * numEvents));
