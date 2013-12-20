@@ -4,43 +4,63 @@
  * See the accompanying LICENSE file for terms.
  */
 
-/*jslint node: true, regexp: true, nomen: true, evil: true, plusplus: true */
+/*jslint browser: true, node: true, regexp: true, nomen: true, evil: true, plusplus: true */
 /*global YUI, escape */
 
 YUI.add('mojito-waterfall', function (Y, NAME) {
     'use strict';
 
-    var PROFILE_KEY_REGEX = /^(\/?[^\/:]+)+(\/[^\/:]+)*(:[^\/:]+)?$/, ///^(\^?\s*[^\^:\~]+(:[^\^:\~]+)*)?(~[^\^~:]+)?$/,
+    var PROFILE_KEY_REGEX = /^(\/?[^\/:]+)+(\/[^\/:]+)*(:[^\/:]+)?$/,
         STATS_TYPES = ['Name', 'Calls', 'Total Duration', 'Avg Duration', 'Min Duration', 'Max Duration'],
         WaterfallNamespace = Y.namespace('mojito.Waterfall'),
         isBrowser = typeof window === 'object';
 
+    /**
+     * Representation of a profile key (the string used to create a profile).
+     * Determines if the key starts at the root, breaks down the path
+     * and keeps track of any duration.
+     * @class ProfileKey
+     * @constructor
+     * @param {String} key
+     */
     function ProfileKey(key) {
+        var parts;
+
         this.profiles = [];
         this.duration = null;
+        this.root = key.indexOf('/') === 0;
 
-        if (key.indexOf('/') === 0) {
-            this.root = true;
-            key = key.replace('/', '');
-        }
-
-        this.profiles = key.split('/');
-        Y.Array.each(this.profiles, function (profile, i) {
-            this.profiles[i] = profile.trim();
+        // Get all the profiles in the key.
+        parts = key.split('/');
+        Y.Array.each(parts, function (profile, i) {
+            profile = profile.trim();
+            if (profile) {
+                this.profiles.push(profile);
+            }
         }.bind(this));
 
+        // Get the duration if it exists.
         if (this.profiles[this.profiles.length - 1].indexOf(':') !== -1) {
-            var split = this.profiles[this.profiles.length - 1].split(':');
-            this.profiles[this.profiles.length - 1] = split[0].trim();
-            this.duration = split[1].trim();
+            parts = this.profiles[this.profiles.length - 1].parts(':');
+            this.profiles[this.profiles.length - 1] = parts[0].trim();
+            this.duration = parts[1].trim();
         }
-
-        this.toString = function () {
-            this.str = this.str || (this.root ? '/' : '') + this.profiles.join('/') + (this.duration ? ':' + this.duration : '');
-            return this.str;
-        };
     }
 
+    ProfileKey.prototype = {
+
+        toString: function () {
+            this.str = this.str || (this.root ? '/' : '') + this.profiles.join('/') + (this.duration ? ':' + this.duration : '');
+            return this.str;
+        }
+    };
+
+    /**
+     * Representation of a profile. Includes any children profiles and durations.
+     * @class Profile
+     * @constructor
+     * @param {String} profileKey
+     */
     function Profile(profileKey, root) {
         this.profileKey = profileKey;
         this.id = profileKey.profiles[0];
@@ -67,15 +87,12 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
     }
 
     Profile.prototype = {
-        compareTo: isBrowser ? function (otherProfile) {
-            return this.startTime > otherProfile.startTime ? 1 : this.startTime < otherProfile.startTime ? -1 : 0;
-        } : function (otherProfile) {
-            var i = this.startTime[0] === otherProfile.startTime[0] ? 1 : 0;
-            return this.startTime[i] > otherProfile.startTime[i] ? 1 : this.startTime[i] < otherProfile.startTime[i] ? -1 : 0;
-        },
 
+        /**
+         * Sets start and end times and any data associated with this profile.
+         * @param {Object} setData
+         */
         set: function (setData) {
-            // find profile
             var profile = this.profile;
 
             if (profile.duration) {
@@ -86,10 +103,17 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
                 profile.endTime = profile.endTime || setData.endTime;
             }
 
-            profile.data = Y.mix(profile.data, setData.data);
+            Y.mix(profile.data, setData.data, true, null, 0, true);
+
             this.type = profile.data.type || this.type;
         },
 
+        /**
+         * Adds a profile to this profile. Recursively merges the profile's children
+         * with this profile's children.
+         * @param {Object} profile
+         * @param {Object} parentProfile
+         */
         add: function (profile, parentProfile) {
             var self = this,
                 profileArray,
@@ -113,18 +137,20 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
             profileArray = children[profile.id];
             lastProfile = profileArray[profileArray.length - 1];
 
-            // if last profile is open and the profile to be added had children then continue through it
-            //if (lastProfile.startTime === undefined && !Y.Object.isEmpty(profile.children) {
             if (lastProfile.startTime === undefined && !Y.Object.isEmpty(profile.children)) {
+                // If last profile is open and the profile to be added has children, add children to the last profile.
                 Y.Object.each(profile.children, function (childProfileArray) {
                     Y.Array.each(childProfileArray, function (childProfile) {
                         self.add(childProfile, lastProfile);
                     });
                 });
             } else if (lastProfile.startTime === undefined) {
+                // If profile to be added has no children, merge with last profile.
                 lastProfile.startTime = profile.startTime;
                 lastProfile.endTime = profile.endTime;
+                Y.mix(lastProfile.data, profile.data, true, null, 0, true);
             } else {
+                // If last profile is closed, just append new profile.
                 profileArray.push(profile);
             }
         }
@@ -137,20 +163,6 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
         this.stats = {};
 
         this._calls = [];
-        this._warnings = [];
-        this._timeProfiles = [{
-            details: {}
-        }];
-
-        this._now = isBrowser ? ((window.performance && (
-            window.performance.now    ||
-            window.performance.mozNow ||
-            window.performance.msNow  ||
-            window.performance.oNow   ||
-            window.performance.webkitNow
-        )) || function () {
-            return new Date().getTime();
-        }) : process.hrtime;
     }
 
     Waterfall.prototype = {
@@ -262,8 +274,6 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
                         endTime = self._normalize(durationObj.endTime),
                         duration = endTime - startTime;
 
-                    // TODO: check for overlap
-
                     row.durations.push({
                         type: durationType,
                         duration: duration
@@ -331,7 +341,6 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
                     });
                 }
 
-    //Y.mix(row, profile.data);
                 row.startTime = profile.startTime;
                 row.endTime = profile.endTime;
                 if (row.details.length === 0) {
@@ -437,6 +446,16 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
             return statStr;
         },
 
+        _now: isBrowser ? ((window.performance && (
+            window.performance.now    ||
+            window.performance.mozNow ||
+            window.performance.msNow  ||
+            window.performance.oNow   ||
+            window.performance.webkitNow
+        )) || function () {
+            return new Date().getTime();
+        }) : process.hrtime,
+
         _processCalls: function () {
             if (this._rootProfile) {
                 return this._rootProfile;
@@ -512,7 +531,6 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
                         // add closed profile to its parent
                         parent.add(profile);
                     } else {
-                        // error
                         self._error('Start was never called.', profileKey);
                     }
                 }
