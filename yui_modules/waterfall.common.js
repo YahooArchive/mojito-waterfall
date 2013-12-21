@@ -148,6 +148,7 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
                 // If profile to be added has no children, merge with last profile.
                 lastProfile.startTime = profile.startTime;
                 lastProfile.endTime = profile.endTime;
+                lastProfile.type = profile.data.type || lastProfile.type;
                 Y.mix(lastProfile.data, profile.data, true, null, 0, true);
             } else {
                 // If last profile is closed, just append new profile.
@@ -165,6 +166,265 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
         this._calls = [];
     }
 
+    Waterfall._now = isBrowser ? ((window.performance && (
+        window.performance.now    ||
+        window.performance.mozNow ||
+        window.performance.msNow  ||
+        window.performance.oNow   ||
+        window.performance.webkitNow
+    )) || function () {
+        return new Date().getTime();
+    }) : process.hrtime;
+
+    Waterfall._timeToMs = function (time) {
+        return isBrowser ? time : time / 1e6;
+    };
+
+    Waterfall._executeExpression = function (expression, values) {
+        var valueExpression,
+            variables,
+            i = 0;
+        // determine whether to add stat based on config
+        if (!expression) {
+            return null;
+        }
+
+        // get variables
+        variables = expression.split(/[^\d\w\s\'\"]/);
+        while (i < variables.length) {
+            variables[i] = variables[i].trim();
+            // remove empty variables and values
+            if (!variables[i] || /^((\d+)|(\'.*\')|(\".*\")|(true)|(false)|(null)|(undefined)|(NaN))$/.test(variables[i])) {
+                variables.splice(i, 1);
+                continue;
+            }
+            i++;
+        }
+        // sort by longest length first in case a variable name is a substring of another
+        variables.sort(function (a, b) {
+            return a.length > b.length ? -1 : a.length < b.length ? 1 : 0;
+        });
+
+        valueExpression = expression;
+        Y.Array.some(variables, function (v) {
+            var value = typeof values[v] === 'string' ? '\'' + values[v] + '\'' : values[v];
+            valueExpression = valueExpression.replace(new RegExp(v, 'g'), value);
+        });
+
+        try {
+            return eval(valueExpression);
+        } catch (e) {
+            Y.log('Error executing the expression "' + expression + '" = "' + valueExpression + '": ' + e.message, 'error', NAME);
+            return null;
+        }
+    };
+
+    Waterfall.getSummary = function (waterfall) {
+
+        waterfall.stats = waterfall.stats || Waterfall.computeStats(waterfall);
+
+        var columnWidths = [],
+            i,
+            headerRow,
+            row,
+            statStr;
+
+        Y.Object.each(waterfall.stats, function (stat, statName) {
+            if (!Y.Lang.isObject(stat)) {
+                return;
+            }
+            Y.Array.each(STATS_TYPES, function (statType, column) {
+                columnWidths[column] = Math.max(String(stat[statType]).length, columnWidths[column] || statType.length);
+            });
+        });
+
+        row = '+';
+        headerRow = '+';
+
+        Y.Array.each(columnWidths, function (width) {
+            for (i = 0; i < width + 2; i++) {
+                row += '-';
+                headerRow += '=';
+            }
+            row += '+';
+            headerRow += '+';
+        });
+
+        statStr = headerRow + '\n|';
+
+        Y.Array.each(STATS_TYPES, function (statType, column) {
+            statStr += ' ' + statType + ' ';
+            for (i = statType.length; i < columnWidths[column]; i++) {
+                statStr += ' ';
+            }
+            statStr += '|';
+        });
+
+        statStr += '\n' + headerRow + '\n';
+
+        Y.Object.each(waterfall.stats, function (stat, statName) {
+            if (!Y.Lang.isObject(stat)) {
+                return;
+            }
+            statStr += '|';
+            Y.Array.each(STATS_TYPES, function (statType, column) {
+                statStr += ' ' + stat[statType] + ' ';
+                for (i = String(stat[statType]).length; i < columnWidths[column]; i++) {
+                    statStr += ' ';
+                }
+                statStr += '|';
+            });
+            statStr += '\n' + row + '\n';
+        });
+
+        if (waterfall.stats.totalDuration) {
+            statStr += 'Total Execution Time: ' + waterfall.stats.totalDuration + '\n';
+        }
+
+        return statStr;
+    };
+
+    Waterfall.computeStats = function (waterfall, config) {
+        var stats = {},
+            units = waterfall.units || '',
+            minTime,
+            maxTime,
+            msTimeToString = Y.mojito.Waterfall.Time.msTimeToString,
+            timeToMs = Y.mojito.Waterfall.Time.timeToMs,
+            profileFilter = config && config.stats && config.stats.profileFilter,
+            statsTop = config && config.stats && config.stats.top,
+            statsFilter = config && config.stats && config.stats.statsFilter,
+            summarySorter = function (a, b) {
+                return b.Duration - a.Duration;
+            },
+            getMsTime = function (profile) {
+                profile.startMs = profile.startMs === undefined ? timeToMs(profile.startTime + (Number(profile.startTime) ? units : '')) : profile.startMs;
+                profile.endMs = profile.endMs === undefined ? timeToMs(profile.endTime + (Number(profile.endTime) ? units : '')) : profile.endMs;
+            },
+            addStat = function (profile, root) {
+                if (Waterfall._executeExpression(profileFilter, profile) === false) {
+                    return;
+                }
+                var type = profile.type || profile.Name,
+                    start = profile.startMs,
+                    end = profile.endMs;
+
+                stats[type] = stats[type] || [];
+                stats[type].push({
+                    startTime: start,
+                    endTime: end,
+                    root: root
+                });
+
+                minTime = minTime === undefined ? start : Math.min(start, minTime);
+                maxTime = maxTime === undefined ? end : Math.max(end, maxTime);
+            },
+            getStats = function (rows, root) {
+                if (!rows) {
+                    return;
+                }
+
+                // Get the names of all the rows in order to give them unique names that indicate
+                // order based on start time.
+                var names = {};
+                // Make sure each row has ms times
+                Y.Array.each(rows, function (row) {
+                    getMsTime(row);
+                });
+                rows.sort(function (a, b) {
+                    return a.startMs > b.startMs ? 1 : a.startMs < b.startMs ? -1 : 0;
+                });
+                Y.Array.each(rows, function (row) {
+                    var name = row.Name;
+                    names[name] = names[name] === undefined ? 0 : 1;
+                });
+
+                Y.Array.each(rows, function (row) {
+                    var name = row.Name;
+                    if (names[name]) {
+                        row.Name = name + ' (' + names[name] + ')';
+                        names[name]++;
+                    }
+                    Y.Array.each(row.durations, function (duration) {
+                        if (duration.type !== 'Elapsed Time') {
+                            getMsTime(duration);
+                            addStat(duration, root);
+                        }
+                    });
+                    addStat(row, root || row.Name);
+                    getStats(row.details, root || row.Name);
+                });
+            };
+
+        getStats(waterfall.rows);
+
+        Y.Object.each(stats, function (statArray, statType) {
+            var stat = {
+                    'Name': statType,
+                    'Calls': statArray.length,
+                    'Total Duration': 0,
+                    'Avg Duration': 0,
+                    'Min Duration': 0,
+                    'Max Duration': 0,
+                    summary: []
+                },
+                totalDuration = 0,
+                minDuration = {},
+                maxDuration = {};
+
+            Y.Array.each(statArray, function (statValue) {
+                var duration = statValue.endTime - statValue.startTime,
+                    name = statValue.root;
+                if (minDuration.duration === undefined || duration < minDuration.duration) {
+                    minDuration.duration = duration;
+                    minDuration.name = name;
+                }
+                if (maxDuration.duration === undefined || duration > maxDuration.duration) {
+                    maxDuration.duration = duration;
+                    maxDuration.name = name;
+                }
+
+                totalDuration += duration;
+
+                stat.summary.push({
+                    Name: name,
+                    Duration: duration
+                });
+            });
+
+            stat['Total Duration'] = totalDuration;
+            stat['Avg Duration'] = totalDuration / statArray.length;
+            stat['Min Duration'] = minDuration.duration;
+            stat['Max Duration'] = maxDuration.duration;
+
+            // determine whether to add stat based on config
+            if (Waterfall._executeExpression(statsFilter, stat) === false) {
+                return;
+            }
+
+            stat['Total Duration'] = msTimeToString(stat['Total Duration'], 4);
+            stat['Avg Duration'] = msTimeToString(stat['Avg Duration'], 4);
+            stat['Min Duration'] = msTimeToString(stat['Min Duration'], 4) + (minDuration.name === statType ? '' : ' (' + minDuration.name + ')');
+            stat['Max Duration'] = msTimeToString(stat['Max Duration'], 4) + (maxDuration.name === statType ? '' : ' (' + maxDuration.name + ')');
+
+            // sort summary
+            stat.summary.sort(summarySorter);
+            // stringify durations
+            Y.Array.each(stat.summary, function (summary) {
+                summary.Duration = msTimeToString(summary.Duration, 4);
+            });
+
+            stats[statType] = stat;
+        });
+        stats.totalDuration = msTimeToString(maxTime - minTime, 4);
+
+        return stats;
+    };
+
+    Waterfall.mergeWaterfalls = function () {
+
+    };
+
     Waterfall.prototype = {
 
         configure: function (config) {
@@ -172,7 +432,7 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
         },
 
         start: function (profileKey, data) {
-            var time = this._now();
+            var time = Waterfall._now();
             this._calls.push({
                 profileKey: profileKey,
                 time: time,
@@ -183,7 +443,7 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
         },
 
         end: function (profileKey, data) {
-            var time = this._now();
+            var time = Waterfall._now();
             this._calls.push({
                 time: time,
                 profileKey: profileKey,
@@ -194,7 +454,7 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
         },
 
         event: function (name, data) {
-            var time = this._now();
+            var time = Waterfall._now();
             this._calls.push({
                 time: time,
                 type: 'event',
@@ -229,9 +489,7 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
         getGui: function () {
             var waterfall = this.waterfall,
                 self = this,
-                createRows,
-                statsTopExpression = this.config && this.config.stats && this.config.stats.top,
-                profileFilterExpression = this.config && this.config.stats && this.config.stats.profileFilter;
+                createRows;
 
             if (waterfall) {
                 return waterfall;
@@ -256,7 +514,7 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
                 waterfall.headers.unshift('Name');
             }
 
-            createRows = function (profile, rows, topProfile, ancestors) {
+            createRows = function (profile, rows) {
                 var row = profile.data || {},
                     totalTime,
                     totalDuration = 0;
@@ -284,16 +542,6 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
                     // update the entry's start and end time according to its children entries
                     profile.startTime = profile.startTime !== undefined ? Math.min(profile.startTime, startTime) : startTime;
                     profile.endTime = profile.endTime !== undefined ? Math.max(profile.endTime, endTime) : endTime;
-
-                    // add stat
-                    self.stats[durationType] = self.stats[durationType] || [];
-                    self.stats[durationType].push({
-                        topProfile: topProfile,
-                        profile: profile,
-                        startTime: startTime,
-                        endTime: endTime,
-                        hasAncestorOfSameType: ancestors[durationType] !== undefined
-                    });
                 });
 
                 // create rows for children entries
@@ -302,22 +550,11 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
                         profileEndTime;
 
                     Y.Array.each(profileArray, function (childProfile, index) {
-                        var newTopProfile,
-                            childRow,
-                            topExpression = statsTopExpression,
-                            newAncestors = Y.clone(ancestors);
+                        var childRow;
 
                         childProfile.data.Name = childProfile.data.Name || childProfile.type;
 
-                        newAncestors[profile.type] = true;
-
-                        if (self._executeExpression(topExpression, childProfile.data)) {
-                            newTopProfile = childProfile;
-                        }
-
-                        newTopProfile = newTopProfile || topProfile || childProfile;
-
-                        childRow = createRows(childProfile, row.details, newTopProfile, newAncestors);
+                        childRow = createRows(childProfile, row.details);
                         profileStartTime = profileStartTime !== undefined ? profileStartTime : childRow.startTime;
                         profileEndTime = childRow.endTime;
                     });
@@ -348,18 +585,6 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
                 }
                 rows.push(row);
 
-                // add stat
-                if (self._executeExpression(profileFilterExpression, profile.data) !== false) {
-                    self.stats[profile.type] = self.stats[profile.type] || [];
-                    self.stats[profile.type].push({
-                        topProfile: topProfile,
-                        profile: profile,
-                        startTime: profile.startTime,
-                        endTime: profile.endTime,
-                        hasAncestorOfSameType: ancestors[profile.type] !== undefined
-                    });
-                }
-
                 self.absoluteEndTime = Math.max(self.absoluteEndTime, profile.endTime || 0);
                 return row;
             };
@@ -372,18 +597,18 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
             waterfall.events = this.events;
 
             // create rows
-            createRows(this._rootProfile, waterfall.rows, null, {});
+            createRows(this._rootProfile, waterfall.rows);
             // remove top level row, which refers to root of all profiles
             waterfall.rows = waterfall.rows[0].details;
 
             // calculate statistics
-            waterfall.stats = this._calcStats();
+            waterfall.stats = Waterfall.computeStats(waterfall, this.config);
 
             // add summary
             waterfall.summary = {
                 Timeline: escape('<div style="text-align:right">' +
                                 'Total Execution Time: ' +
-                                Y.mojito.Waterfall.Time.msTimeToString(self._timeToMs(self.absoluteEndTime), 4) + '</div>')
+                                Y.mojito.Waterfall.Time.msTimeToString(Waterfall._timeToMs(self.absoluteEndTime), 4) + '</div>')
             };
 
             this.waterfall = waterfall;
@@ -392,69 +617,9 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
         },
 
         getSummary: function () {
-            var waterfall = this.getGui(),
-                columnWidths = [],
-                i,
-                headerRow,
-                row,
-                statStr;
-
-            Y.Object.each(waterfall.stats, function (stat, statName) {
-                Y.Array.each(STATS_TYPES, function (statType, column) {
-                    columnWidths[column] = Math.max(String(stat[statType]).length, columnWidths[column] || statType.length);
-                });
-            });
-
-            row = '+';
-            headerRow = '+';
-
-            Y.Array.each(columnWidths, function (width) {
-                for (i = 0; i < width + 2; i++) {
-                    row += '-';
-                    headerRow += '=';
-                }
-                row += '+';
-                headerRow += '+';
-            });
-
-            statStr = headerRow + '\n|';
-
-            Y.Array.each(STATS_TYPES, function (statType, column) {
-                statStr += ' ' + statType + ' ';
-                for (i = statType.length; i < columnWidths[column]; i++) {
-                    statStr += ' ';
-                }
-                statStr += '|';
-            });
-
-            statStr += '\n' + headerRow + '\n';
-
-            Y.Object.each(waterfall.stats, function (stat, statName) {
-                statStr += '|';
-                Y.Array.each(STATS_TYPES, function (statType, column) {
-                    statStr += ' ' + stat[statType] + ' ';
-                    for (i = String(stat[statType]).length; i < columnWidths[column]; i++) {
-                        statStr += ' ';
-                    }
-                    statStr += '|';
-                });
-                statStr += '\n' + row + '\n';
-            });
-
-            statStr += 'Total Execution Time: ' + Y.mojito.Waterfall.Time.msTimeToString(this._timeToMs(this.absoluteEndTime), 4) + '\n';
-
-            return statStr;
+            var waterfall = this.getGui();
+            return Waterfall.getSummary(waterfall);
         },
-
-        _now: isBrowser ? ((window.performance && (
-            window.performance.now    ||
-            window.performance.mozNow ||
-            window.performance.msNow  ||
-            window.performance.oNow   ||
-            window.performance.webkitNow
-        )) || function () {
-            return new Date().getTime();
-        }) : process.hrtime,
 
         _processCalls: function () {
             if (this._rootProfile) {
@@ -563,87 +728,6 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
             Y.log('Error when profiling \'' + profileKeyStr + '\': ' + message, 'error', NAME);
         },
 
-        _calcStats: function () {
-            var self = this,
-                stats = {},
-                msTimeToString = Y.mojito.Waterfall.Time.msTimeToString,
-                statsFilterExpression = this.config && this.config.stats && this.config.stats.statsFilter,
-                summarySorter = function (a, b) {
-                    return b.Duration - a.Duration;
-                };
-
-            Y.Object.each(this.stats, function (statArray, statType) {
-                if (statType === 'root') {
-                    return;
-                }
-
-                var stat = {
-                        'Name': statType,
-                        'Calls': statArray.length,
-                        'Total Duration': 0,
-                        'Avg Duration': 0,
-                        'Min Duration': 0,
-                        'Max Duration': 0,
-                        summary: []
-                    },
-                    totalNonOverlappingDuration = 0,
-                    totalDuration = 0,
-                    minDuration = {},
-                    maxDuration = {};
-
-                Y.Array.each(statArray, function (statValue) {
-                    var duration = statValue.endTime - statValue.startTime,
-                        profileName = (statValue.topProfile || statValue.profile).data.Name;
-                    if (minDuration.duration === undefined || duration < minDuration.duration) {
-                        minDuration.duration = duration;
-                        minDuration.name = profileName;
-                    }
-                    if (maxDuration.duration === undefined || duration > maxDuration.duration) {
-                        maxDuration.duration = duration;
-                        maxDuration.name = profileName;
-                    }
-
-                    totalDuration += duration;
-                    if (!statValue.hasAncestorOfSameType) {
-                        totalNonOverlappingDuration += duration;
-                    }
-                    stat.summary.push({
-                        Name: profileName,
-                        Duration: duration
-                    });
-                });
-
-                stat['Total Duration'] = totalNonOverlappingDuration;//totalDuration;
-                stat['Avg Duration'] = totalDuration / statArray.length;
-                stat['Min Duration'] = minDuration.duration;
-                stat['Max Duration'] = maxDuration.duration;
-
-                // determine whether to add stat based on config
-                if (self._executeExpression(statsFilterExpression, stat) === false) {
-                    return;
-                }
-
-                stat['Total Duration'] = msTimeToString(self._timeToMs(stat['Total Duration']), 4);
-                stat['Avg Duration'] = msTimeToString(self._timeToMs(stat['Avg Duration']), 4);
-                stat['Min Duration'] = msTimeToString(self._timeToMs(stat['Min Duration']), 4) + ' (' + minDuration.name + ')';
-                stat['Max Duration'] = msTimeToString(self._timeToMs(stat['Max Duration']), 4) + ' (' + maxDuration.name + ')';
-
-                // sort summary
-                stat.summary.sort(summarySorter);
-                // stringify durations
-                Y.Array.each(stat.summary, function (summary) {
-                    summary.Duration = msTimeToString(self._timeToMs(summary.Duration), 4);
-                });
-
-                stats[statType] = stat;
-            });
-            return stats;
-        },
-
-        _timeToMs: function (time) {
-            return isBrowser ? time : time / 1e6;
-        },
-
         _normalize: function (time) {
             if (!time) {
                 return undefined;
@@ -663,45 +747,6 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
                 this._error('Cannot continue profiling after the waterfall has been finalized.');
             };
             this.configure = this.start = this.end = this.event = this.clear = this.pause = this.resume = disabled;
-        },
-
-        _executeExpression: function (expression, values) {
-            var valueExpression,
-                variables,
-                i = 0;
-            // determine whether to add stat based on config
-            if (!expression) {
-                return null;
-            }
-
-            // get variables
-            variables = expression.split(/[^\d\w\s\'\"]/);
-            while (i < variables.length) {
-                variables[i] = variables[i].trim();
-                // remove empty variables and values
-                if (!variables[i] || /^((\d+)|(\'.*\')|(\".*\")|(true)|(false)|(null)|(undefined)|(NaN))$/.test(variables[i])) {
-                    variables.splice(i, 1);
-                    continue;
-                }
-                i++;
-            }
-            // sort by longest length first in case a variable name is a substring of another
-            variables.sort(function (a, b) {
-                return a.length > b.length ? -1 : a.length < b.length ? 1 : 0;
-            });
-
-            valueExpression = expression;
-            Y.Array.some(variables, function (v) {
-                var value = typeof values[v] === 'string' ? '\'' + values[v] + '\'' : values[v];
-                valueExpression = valueExpression.replace(new RegExp(v, 'g'), value);
-            });
-
-            try {
-                return eval(valueExpression);
-            } catch (e) {
-                Y.log('Error executing the expression "' + expression + '" = "' + valueExpression + '": ' + e.message, 'error', NAME);
-                return null;
-            }
         }
     };
 

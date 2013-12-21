@@ -230,6 +230,9 @@ YUI.add('mojito-waterfall-gui', function (Y, NAME) {
                 // create body
                 tbody = Y.Node.create("<tbody/>");
                 Y.Object.each(stats, function (stat) {
+                    if (!Y.Lang.isObject(stat)) {
+                        return;
+                    }
                     tr = Y.Node.create("<tr/>");
                     Y.Object.each(stat, function (statValue, header) {
                         if (header === "summary") {
@@ -445,26 +448,6 @@ YUI.add('mojito-waterfall-gui', function (Y, NAME) {
                         endTime = Math.max(event.time, endTime);
                         startTime = Math.min(event.time, startTime);
                     });
-
-                    (function uniqueIds(rows) {
-                        var idHeader = data.headers[0],
-                            ids = {};
-                        if (!Y.Lang.isArray(rows)) {
-                            return;
-                        }
-                        Y.Array.each(rows, function (row) {
-                            var id = row[idHeader];
-                            ids[id] = ids[id] === undefined ? 0 : 1;
-                        });
-                        Y.Array.each(rows, function (row) {
-                            var id = row[idHeader];
-                            if (ids[id]) {
-                                row[idHeader] = id + ' (' + ids[id] + ')';
-                                ids[id]++;
-                            }
-                            uniqueIds(row.details);
-                        });
-                    }(data.rows));
 
                     // create body
                     createRow = function (row, depth, isLastChild) {
