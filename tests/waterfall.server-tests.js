@@ -20,7 +20,7 @@ YUI.add('waterfall-tests', function (Y, NAME) {
         verifyGUI: function (waterfallData) {
             // TODO: test waterfall-gui
             var body = Y.one('body'),
-                waterfall = new Y.Waterfall.GUI(waterfallData),
+                waterfall = new Y.mojito.Waterfall.GUI(waterfallData),
                 waterfallElement = waterfall.get();
 
             body.append(waterfallElement);
@@ -29,19 +29,19 @@ YUI.add('waterfall-tests', function (Y, NAME) {
         verifyProfile: function (expectedProfile, actualProfile) {
             var self = this;
 
-            Assert.areEqual(expectedProfile.name, actualProfile.name, 'Mismatching profile names.');
+            Assert.areEqual(expectedProfile.id, actualProfile.id, 'Mismatching profile ids.');
 
             // verify durations
-            Assert.areEqual(Y.Object.size(expectedProfile.durations), Y.Object.size(actualProfile.durations), 'Unequal number of durations for \'' + expectedProfile.name + '\'');
-            Y.Object.each(expectedProfile.durations, function (expectedDuration, name) {
-                Assert.isNotUndefined(actualProfile.durations[name], 'Did not find expected duration type \'' + name + '\'');
+            Assert.areEqual(Y.Object.size(expectedProfile.durations), Y.Object.size(actualProfile.durations), 'Unequal number of durations for \'' + expectedProfile.id + '\'');
+            Y.Object.each(expectedProfile.durations, function (expectedDuration, id) {
+                Assert.isNotUndefined(actualProfile.durations[id], 'Did not find expected duration type \'' + id + '\'');
             });
 
             // verify children
-            Assert.areEqual(Y.Object.size(expectedProfile.children), Y.Object.size(actualProfile.children), 'Unequal number of children for \'' + expectedProfile.name + '\'');
-            Y.Object.each(expectedProfile.children, function (expectedChildProfileArray, name) {
-                var actualChildProfileArray = actualProfile.children[name];
-                Assert.areEqual(expectedChildProfileArray.length, actualChildProfileArray.length, 'Mismatching number of profiles for profile type \'' + name + '\'');
+            Assert.areEqual(Y.Object.size(expectedProfile.children), Y.Object.size(actualProfile.children), 'Unequal number of children for \'' + expectedProfile.id + '\'');
+            Y.Object.each(expectedProfile.children, function (expectedChildProfileArray, id) {
+                var actualChildProfileArray = actualProfile.children[id];
+                Assert.areEqual(expectedChildProfileArray.length, actualChildProfileArray.length, 'Mismatching number of profiles for profile of type \'' + id + '\'');
                 Y.Array.each(expectedChildProfileArray, function (expectedChildProfile, index) {
                     var actualChildProfile = actualChildProfileArray[index];
                     self.verifyProfile(expectedChildProfile, actualChildProfile);
@@ -53,29 +53,29 @@ YUI.add('waterfall-tests', function (Y, NAME) {
             Y.applyConfig({
                 useSync: true,
                 modules: {
-                    'waterfall': {
+                    'mojito-waterfall': {
                         fullpath: require('path').join(__dirname, '../yui_modules/waterfall.common.js')
                     },
-                    'waterfall-gui': {
-                        fullpath: require('path').join(__dirname, '../yui_modules/waterfall-gui.client.js')
+                    'mojito-waterfall-gui': {
+                        fullpath: require('path').join(__dirname, '../yui_modules/gui.client.js')
                     },
-                    'waterfall-popup': {
-                        fullpath: require('path').join(__dirname, '../yui_modules/waterfall-popup.client.js')
+                    'mojito-waterfall-popup': {
+                        fullpath: require('path').join(__dirname, '../yui_modules/popup.client.js')
                     }
                 }
             });
 
-            Y.use('waterfall');
+            Y.use('mojito-waterfall');
         },
 
         'Test stop, resume, and clear': function () {
-            var waterfall = new Y.Waterfall(),
+            var waterfall = new Y.mojito.Waterfall(),
                 waterfallData;
 
             waterfall.resume();
 
-            waterfall.stop();
-            waterfall.stop();
+            waterfall.pause();
+            waterfall.pause();
             waterfall.start('a');
             waterfall.event('a');
             Assert.areSame(0, waterfall._calls.length, 'Unexpected number of calls.');
@@ -92,9 +92,9 @@ YUI.add('waterfall-tests', function (Y, NAME) {
         },
 
         'Invalid Waterfall': function () {
-            var waterfall = new Y.Waterfall(),
+            var waterfall = new Y.mojito.Waterfall(),
                 expectedRootProfile = {
-                    name: 'root'
+                    id: 'root'
                 };
 
             waterfall.start();
@@ -105,47 +105,48 @@ YUI.add('waterfall-tests', function (Y, NAME) {
             waterfall.end('/a/');
             waterfall.start('/:a');
             waterfall.end('/:a');
-            waterfall.start('//a');
-            waterfall.end('//a');
-            waterfall.start('/a');
-            waterfall.end('/a');
-            waterfall.start('a/');
-            waterfall.end('a/');
+            waterfall.start('/:/a');
+            waterfall.end('/:/a');
+            waterfall.start('/a:');
+            waterfall.end('/a:');
+            waterfall.start(':a/');
+            waterfall.end(':a/');
 
             waterfall.end('a');
             waterfall.start('a');
             waterfall.start('b');
 
             waterfall._processCalls();
+
             this.verifyProfile(expectedRootProfile, waterfall._rootProfile);
         },
 
         'Valid Waterfall': function () {
-            var waterfall = new Y.Waterfall({
+            var waterfall = new Y.mojito.Waterfall({
                     stats: "Calls > 1"
                 }),
                 waterfallData,
                 expectedRootProfile = {
-                    name: 'root',
+                    id: 'root',
                     children: {
                         a: [
                             {
-                                name: 'a',
+                                id: 'a',
                                 children: {
                                     b: [
                                         {
-                                            name: 'b'
+                                            id: 'b'
                                         },
                                         {
-                                            name: 'b',
+                                            id: 'b',
                                             children: {
                                                 c: [
                                                     {
-                                                        name: 'c',
+                                                        id: 'c',
                                                         children: {
                                                             d: [
                                                                 {
-                                                                    name: 'd',
+                                                                    id: 'd',
                                                                     durations: {
                                                                         e: true
                                                                     }
@@ -157,7 +158,7 @@ YUI.add('waterfall-tests', function (Y, NAME) {
                                             }
                                         },
                                         {
-                                            name: 'b',
+                                            id: 'b',
                                             durations: {
                                                 f: true
                                             }
@@ -168,15 +169,15 @@ YUI.add('waterfall-tests', function (Y, NAME) {
                         ],
                         x: [
                             {
-                                name: 'x',
+                                id: 'x',
                                 children: {
                                     y: [
                                         {
-                                            name: 'y',
+                                            id: 'y',
                                             children: {
                                                 z: [
                                                     {
-                                                        name: 'z'
+                                                        id: 'z'
                                                     }
                                                 ]
                                             }
@@ -205,16 +206,16 @@ YUI.add('waterfall-tests', function (Y, NAME) {
 
             waterfall.event('end');
 
-            waterfallData = waterfall.get();
+            waterfallData = waterfall.getGui();
 
-            Assert.areSame(23, waterfall.getSummary().split('\n').length, 'Summary has an unexpected number of lines.');
+            Assert.areSame(27, waterfall.getSummary().split('\n').length, 'Summary has an unexpected number of lines.');
 
             this.verifyProfile(expectedRootProfile, waterfall._rootProfile);
             //this.verifyGUI(waterfallData);
         },
 
         'Test Debug Time': function () {
-            var Time = Y.Waterfall.Time,
+            var Time = Y.mojito.Waterfall.Time,
                 timeMap = {
                     "0": 0,
                     "5.75ps": 0.00000000575,

@@ -41,7 +41,7 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
 
         // Get the duration if it exists.
         if (this.profiles[this.profiles.length - 1].indexOf(':') !== -1) {
-            parts = this.profiles[this.profiles.length - 1].parts(':');
+            parts = this.profiles[this.profiles.length - 1].split(':');
             this.profiles[this.profiles.length - 1] = parts[0].trim();
             this.duration = parts[1].trim();
         }
@@ -144,8 +144,8 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
                         self.add(childProfile, lastProfile);
                     });
                 });
-            } else if (lastProfile.startTime === undefined) {
-                // If profile to be added has no children, merge with last profile.
+            } else if (lastProfile.startTime === undefined && Y.Object.isEmpty(lastProfile.children)) {
+                // If profile to be added and last profile have no children, then merge them
                 lastProfile.startTime = profile.startTime;
                 lastProfile.endTime = profile.endTime;
                 lastProfile.type = profile.data.type || lastProfile.type;
@@ -652,7 +652,7 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
                     return;
                 }
 
-                args.profileKey = args.profileKey.trim();
+                args.profileKey = (args.profileKey || '').trim();
                 if (!args.profileKey || !PROFILE_KEY_REGEX.test(args.profileKey)) {
                     self._error("Invalid profile.", args.profileKey);
                     return;
