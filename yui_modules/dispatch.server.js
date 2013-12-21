@@ -17,7 +17,7 @@ YUI.add('mojito-waterfall-dispatcher', function (Y, NAME) {
             return Y.mojito.Dispatcher.init.apply(this, arguments);
         },
 
-        _createActionContext: function (command, adapter, id, type) {
+        _createActionContext: function (command, adapter, id) {
             var ac,
                 controllerName = Y.mojito.controllers[command.instance.controller],
                 controller = Y.mojito.util.heir(controllerName);
@@ -30,18 +30,18 @@ YUI.add('mojito-waterfall-dispatcher', function (Y, NAME) {
             // Note that creation of an ActionContext current causes
             // immediate invocation of the dispatch() call.
             try {
-                this.waterfall.start('/' + id + '/Create Action Context', {type: type, level: 'mojito'});
+                this.waterfall.start('/' + id + '/Create Action Context', {level: 'mojito'});
                 ac = new Y.mojito.Waterfall.ActionContext({
                     command: command,
                     controller: controller,
                     dispatcher: this,         // NOTE passing dispatcher.
                     adapter: adapter,
                     store: this.store
-                }, this.waterfall, id, type);
+                }, this.waterfall, id);
                 this.waterfall.end('/' + id + '/Create Action Context');
 
                 // Calling controller after action context creation.
-                this.waterfall.start('/' + id + '/Controller', {type: type, level: 'mojito'});
+                this.waterfall.start('/' + id + '/Controller', {level: 'mojito'});
                 controller[ac.action](ac);
             } catch (e) {
                 Y.log('Error from dispatch on instance \'' +
@@ -88,7 +88,7 @@ YUI.add('mojito-waterfall-dispatcher', function (Y, NAME) {
                 return;
             }
 
-            my.waterfall.start('/' + id + '/Expand Instance', {type: type, level: 'mojito'});
+            my.waterfall.start('/' + id + '/Expand Instance', {level: 'mojito'});
             store.expandInstance(command.instance, command.context,
                 function (err, instance) {
 
@@ -115,7 +115,7 @@ YUI.add('mojito-waterfall-dispatcher', function (Y, NAME) {
                             command.instance.type + '].'));
                     } else {
                         // dispatching AC
-                        my._createActionContext(command, adapter, id, type);
+                        my._createActionContext(command, adapter, id);
                     }
                 });
         }

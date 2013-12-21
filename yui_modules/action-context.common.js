@@ -10,13 +10,12 @@
 YUI.add('mojito-waterfall-action-context', function (Y, NAME) {
     'use strict';
 
-    function ActionContext(opts, waterfall, id, type) {
+    function ActionContext(opts, waterfall, id) {
         var controller = opts.controller,
             action = opts.command.action || opts.command.instance.action || 'index';
 
         this.waterfall = waterfall;
         this._id = id;
-        this._type = type;
 
         // Fake the controller with a noop such that we can call controller ourselves in the waterfall dispatcher,
         // otherwise the controller would get called during the creation of the action context.
@@ -34,7 +33,7 @@ YUI.add('mojito-waterfall-action-context', function (Y, NAME) {
                 // Once the controller has called ac.done the controller is considered
                 // finished and the rendering begins.
                 this.waterfall.end('/' + this._id + '/Controller');
-                this.waterfall.start('/' + this._id + '/Render', {type: this._type, level: 'mojito'});
+                this.waterfall.start('/' + this._id + '/Render', {level: 'mojito'});
             }
             Y.mojito.ActionContext.prototype.done.apply(this, arguments);
         },
