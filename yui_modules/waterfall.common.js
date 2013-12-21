@@ -124,6 +124,8 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
             children = parentProfile.children;
 
             if (!profile.id) {
+                // This profile is a simple profile just containing durations,
+                // so the durations should go directly to the parent profile.
                 parentProfile.durations = parentProfile.durations || {};
                 Y.mix(parentProfile.durations, profile.durations);
                 return;
@@ -137,15 +139,19 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
             profileArray = children[profile.id];
             lastProfile = profileArray[profileArray.length - 1];
 
-            if (lastProfile.startTime === undefined && !Y.Object.isEmpty(profile.children)) {
+            if (profile.durations) {
+                // This profile has durations for the a profile with the id.
+                lastProfile.durations = lastProfile.durations || {};
+                Y.mix(lastProfile.durations, profile.durations);
+            } else if (lastProfile.startTime === undefined && !Y.Object.isEmpty(profile.children)) {
                 // If last profile is open and the profile to be added has children, add children to the last profile.
                 Y.Object.each(profile.children, function (childProfileArray) {
                     Y.Array.each(childProfileArray, function (childProfile) {
                         self.add(childProfile, lastProfile);
                     });
                 });
-            } else if (lastProfile.startTime === undefined && Y.Object.isEmpty(lastProfile.children)) {
-                // If profile to be added and last profile have no children, then merge them
+            } else if (lastProfile.startTime === undefined) {
+                // If profile to be added has no children, merge with last profile.
                 lastProfile.startTime = profile.startTime;
                 lastProfile.endTime = profile.endTime;
                 lastProfile.type = profile.data.type || lastProfile.type;

@@ -139,6 +139,9 @@ YUI.add('waterfall-tests', function (Y, NAME) {
                                         },
                                         {
                                             id: 'b',
+                                            durations: {
+                                                f: true
+                                            },
                                             children: {
                                                 c: [
                                                     {
@@ -155,12 +158,6 @@ YUI.add('waterfall-tests', function (Y, NAME) {
                                                         }
                                                     }
                                                 ]
-                                            }
-                                        },
-                                        {
-                                            id: 'b',
-                                            durations: {
-                                                f: true
                                             }
                                         }
                                     ]
