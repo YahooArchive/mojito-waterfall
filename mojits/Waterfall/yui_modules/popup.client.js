@@ -14,9 +14,14 @@ YUI.add('mojito-waterfall-popup', function (Y, NAME) {
             self = this,
             attachEvents = function (node, row, col) {
                 node.on('mouseover', function (e) {
+                    if (!e.button) {
+                        self.show();
+                        self.update(row, col);
+                        self.move(e.pageX, e.pageY);
+                    }
+                });
+                node.on('mouseup', function () {
                     self.show();
-                    self.update(row, col);
-                    self.move(e.pageX, e.pageY);
                 });
                 node.on('mousemove', function (e) {
                     self.move(e.pageX, e.pageY);
@@ -26,12 +31,16 @@ YUI.add('mojito-waterfall-popup', function (Y, NAME) {
                 });
             };
 
-        tbody.all('tr').each(function (tr, row) {
+        tbody.on('mousedown', function () {
+            self.hide();
+        });
+
+        tbody.all('> tr').each(function (tr, row) {
             if (!columns) {
                 attachEvents(tr, row);
                 return;
             }
-            tr.all('td').each(function (td, col) {
+            tr.all('> td').each(function (td, col) {
                 if (columns.indexOf(col) !== -1) {
                     attachEvents(td, row, col);
                 }
@@ -53,7 +62,7 @@ YUI.add('mojito-waterfall-popup', function (Y, NAME) {
         };
 
         this.move = function (mouseX, mouseY) {
-            var topLimit = tbody.getY(),
+            var topLimit = window.scrollY,
                 leftLimit = tbody.getX(),
                 rightLimit = tbody.get("offsetWidth") + tbody.getX(),
                 bottomLimit = tbody.get("offsetHeight") + tbody.getY(),
@@ -63,7 +72,7 @@ YUI.add('mojito-waterfall-popup', function (Y, NAME) {
 
             popup.setXY([
                 Math.min(mouseX + spacing, Math.max(leftLimit, rightLimit - popupWidth)),
-                Math.min(mouseY + spacing, bottomLimit - popupHeight)
+                Math.max(Math.min(mouseY + spacing, bottomLimit - popupHeight), topLimit)
             ]);
         };
     };

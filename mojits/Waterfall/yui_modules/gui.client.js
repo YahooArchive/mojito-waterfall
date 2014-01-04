@@ -17,48 +17,15 @@ YUI.add('mojito-waterfall-gui', function (Y, NAME) {
             waterfallDomObject,
 
             WaterfallSummary = function (summaries, events, waterfallTbody) {
-
                 var startTimeDescription = "Start time since the beginning",
                     phasesDescription = "Phases start and elapsed time relative to the start:",
-                    eventsDescription = "Event timing relative to the start:",
-                    tableContainer = Y.Node.create("<div style='position:absolute'/>"),
-                    table = Y.Node.create("<table cellspacing='3px' class='waterfall-summary'></table>"),
-                    currentSummary,
-                    self = this;
+                    eventsDescription = "Event timing relative to the start:";
 
-                this.get = function () {
-                    return tableContainer;
-                };
+                return new Y.mojito.Waterfall.Popup(waterfallTbody, waterfall, function (popup, row) {
+                    popup.set('innerHTML', '');
 
-                this.hide = function () {
-                    tableContainer.hide();
-                };
-
-                this.move = function (mouseX, mouseY) {
-                    var topLimit = waterfallTbody.getY(),
-                        rightLimit = waterfallTbody.get("offsetWidth") + waterfallTbody.getX(),
-                        bottomLimit = waterfallTbody.get("offsetHeight") + waterfallTbody.getY(),
-                        tableWidth = table.get("offsetWidth"),
-                        tableHeight = table.get("offsetHeight"),
-                        spacing = 10;
-
-                    tableContainer.setXY([
-                        Math.min(mouseX + spacing, rightLimit - tableWidth),
-                        Math.max(topLimit, Math.min(mouseY + spacing, bottomLimit - tableHeight))
-                    ]);
-                };
-
-                this.showSummary = function (num, mouseX, mouseY) {
-
-                    if (num === currentSummary) {
-                        tableContainer.show();
-                        self.move(mouseX, mouseY);
-                        return;
-                    }
-
-                    table.set("innerHTML", "");
-
-                    var tr,
+                    var table = Y.Node.create("<table cellspacing='3px' class='waterfall-summary'></table>"),
+                        tr,
                         td,
                         msTimeToString = Y.mojito.Waterfall.Time.msTimeToString;
 
@@ -68,7 +35,7 @@ YUI.add('mojito-waterfall-gui', function (Y, NAME) {
                     // start time and description
                     tr = Y.Node.create("<tr class='start-time'/>");
                     tr.append("<td/>");
-                    td = Y.Node.create("<td class='time'>" + (summaries[num].startTime > 0 ? "+" : "") + msTimeToString(summaries[num].startTime, 3) + "</td>");
+                    td = Y.Node.create("<td class='time'>" + (summaries[row].startTime > 0 ? "+" : "") + msTimeToString(summaries[row].startTime, 3) + "</td>");
                     tr.append(td);
                     tr.append("<td colspan='2' class='description' nowrap>" + startTimeDescription + "</td>");
                     table.append(tr);
@@ -80,7 +47,7 @@ YUI.add('mojito-waterfall-gui', function (Y, NAME) {
                     table.append("<tr class='breakdown-description'><td colspan='4' class='description'>" + phasesDescription + "</td></tr>");
 
                     // breakdowns
-                    Y.each(summaries[num].durations, function (duration) {
+                    Y.each(summaries[row].durations, function (duration) {
                         tr = Y.Node.create("<tr class='breakdown'></tr>");
                         tr.append("<td class='type-color gradient' style='background-color:" + duration.color + "'></td>");
                         tr.append("<td class='time'>" + (duration.startTime > 0 ? "+" : "") + msTimeToString(duration.startTime, 3) + "</td>");
@@ -98,7 +65,7 @@ YUI.add('mojito-waterfall-gui', function (Y, NAME) {
 
                         // events
                         Y.each(events, function (event) {
-                            var relativeTime = event.time - summaries[num].startTime;
+                            var relativeTime = event.time - summaries[row].startTime;
                             tr = Y.Node.create("<tr class='breakdown'></tr>");
                             tr.append("<td><div class='event-color' style='border-left: 2px solid " + event.color + "'/></td>");
                             tr.append("<td class='time'>" + (relativeTime > 0 ? "+" : "") + msTimeToString(relativeTime, 3) + "</td>");
@@ -109,14 +76,8 @@ YUI.add('mojito-waterfall-gui', function (Y, NAME) {
 
                     // vertical space
                     table.append("<tr><td colspan='4' class='vertical-space'></td></tr>");
-
-                    tableContainer.append(table);
-                    tableContainer.show();
-                    self.move(mouseX, mouseY);
-                    currentSummary = num;
-                };
-
-                this.hide();
+                    popup.append(table);
+                }, [1]);
             },
 
             WaterfallRuler = function () {
@@ -605,17 +566,11 @@ YUI.add('mojito-waterfall-gui', function (Y, NAME) {
                         // set summary and ruler events
                         td.on("mousedown", function (event) {
                             waterfallRuler.start(event.pageX, event.pageY);
-                            waterfallSummary.hide();
                         });
                         td.on("mousemove", function (event) {
                             if (waterfallRuler.isEnabled()) {
                                 waterfallRuler.update(event.pageX, event.pageY, td.get("offsetWidth") - paddingRight, endTime - startTime);
-                            } else {
-                                waterfallSummary.showSummary(rowIndex, event.pageX, event.pageY);
                             }
-                        });
-                        td.on("mouseout", function (event) {
-                            waterfallSummary.hide();
                         });
                         Y.Event.defineOutside('mouseout');
                         tbody.on('mouseoveroutside', function () {
@@ -686,7 +641,7 @@ YUI.add('mojito-waterfall-gui', function (Y, NAME) {
                     waterfallStats = new WaterfallStats(data.stats);
 
                     waterfall.append(table);
-                    waterfall.append(waterfallSummary.get());
+                    //waterfall.append(waterfallSummary.get());
                     waterfall.append(waterfallRuler.get());
                     waterfall.append(waterfallStats.get());
                 } catch (e) {
