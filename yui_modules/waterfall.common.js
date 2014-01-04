@@ -12,6 +12,7 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
 
     var PROFILE_KEY_REGEX = /^(\/?[^\/:]+)+(\/[^\/:]+)*(:[^\/:]+)?$/,
         STATS_TYPES = ['Name', 'Calls', 'Total Duration', 'Avg Duration', 'Min Duration', 'Max Duration'],
+        Time = Y.mojito.Waterfall.Time,
         WaterfallNamespace = Y.namespace('mojito.Waterfall'),
         isBrowser = typeof window === 'object';
 
@@ -284,7 +285,7 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
         });
 
         if (waterfall.stats.totalDuration) {
-            statStr += 'Total Execution Time: ' + waterfall.stats.totalDuration + '\n';
+            statStr += 'Total Execution Time: ' + Time.timeToString(waterfall.stats.totalDuration, 4) + '\n';
         }
 
         return statStr;
@@ -295,35 +296,23 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
             units = waterfall.units || '',
             minTime,
             maxTime,
-            msTimeToString = Y.mojito.Waterfall.Time.msTimeToString,
-            timeToMs = Y.mojito.Waterfall.Time.timeToMs,
             profileFilter = config && config.stats && config.stats.profileFilter,
             statsTop = config && config.stats && config.stats.top,
             statsFilter = config && config.stats && config.stats.statsFilter,
             summarySorter = function (a, b) {
                 return b.Duration - a.Duration;
             },
-            getMsTime = function (profile) {
-                profile.startMs = profile.startMs === undefined ? timeToMs(profile.startTime + (Number(profile.startTime) ? units : '')) : profile.startMs;
-                profile.endMs = profile.endMs === undefined ? timeToMs(profile.endTime + (Number(profile.endTime) ? units : '')) : profile.endMs;
-            },
-            addStat = function (profile, root) {
+            addStat = function (profile, duration, root) {
                 if (Waterfall._executeExpression(profileFilter, profile) === false) {
                     return;
                 }
-                var type = profile.type || profile.Name,
-                    start = profile.startMs,
-                    end = profile.endMs;
+                var type = profile.type || profile.Name;
 
                 stats[type] = stats[type] || [];
                 stats[type].push({
-                    startTime: start,
-                    endTime: end,
+                    duration: duration,
                     root: root
                 });
-
-                minTime = minTime === undefined ? start : Math.min(start, minTime);
-                maxTime = maxTime === undefined ? end : Math.max(end, maxTime);
             },
             getStats = function (rows, root) {
                 if (!rows) {
@@ -333,12 +322,8 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
                 // Get the names of all the rows in order to give them unique names that indicate
                 // order based on start time.
                 var names = {};
-                // Make sure each row has ms times
-                Y.Array.each(rows, function (row) {
-                    getMsTime(row);
-                });
                 rows.sort(function (a, b) {
-                    return a.startMs > b.startMs ? 1 : a.startMs < b.startMs ? -1 : 0;
+                    return a.startTime > b.startTime ? 1 : a.startTime < b.startTime ? -1 : 0;
                 });
                 Y.Array.each(rows, function (row) {
                     var name = row.Name;
@@ -346,18 +331,25 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
                 });
 
                 Y.Array.each(rows, function (row) {
-                    var name = row.Name;
+                    var name = row.Name,
+                        endTime = row.startTime;
                     if (names[name]) {
                         row.Name = name + ' (' + names[name] + ')';
                         names[name]++;
                     }
+
                     Y.Array.each(row.durations, function (duration) {
+                        endTime += duration.duration;
                         if (duration.type !== 'Elapsed Time') {
-                            getMsTime(duration);
-                            addStat(duration, root);
+                            addStat(duration, duration.duration, root);
                         }
                     });
-                    addStat(row, root || row.Name);
+                    row.endTime = row.endTime || endTime;
+
+                    minTime = Math.min(minTime, row.startTime) || row.startTime;
+                    maxTime = Math.max(maxTime, row.endTime) || row.endTime;
+
+                    addStat(row, row.endTime - row.startTime, root || row.Name);
                     getStats(row.details, root || row.Name);
                 });
             };
@@ -379,7 +371,7 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
                 maxDuration = {};
 
             Y.Array.each(statArray, function (statValue) {
-                var duration = statValue.endTime - statValue.startTime,
+                var duration = statValue.duration,
                     name = statValue.root;
                 if (minDuration.duration === undefined || duration < minDuration.duration) {
                     minDuration.duration = duration;
@@ -408,27 +400,94 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
                 return;
             }
 
-            stat['Total Duration'] = msTimeToString(stat['Total Duration'], 4);
-            stat['Avg Duration'] = msTimeToString(stat['Avg Duration'], 4);
-            stat['Min Duration'] = msTimeToString(stat['Min Duration'], 4) + (minDuration.name === statType ? '' : ' (' + minDuration.name + ')');
-            stat['Max Duration'] = msTimeToString(stat['Max Duration'], 4) + (maxDuration.name === statType ? '' : ' (' + maxDuration.name + ')');
+            stat['Total Duration'] = Time.timeToString(stat['Total Duration'] + units, 4);
+            stat['Avg Duration'] = Time.timeToString(stat['Avg Duration'] + units, 4);
+            stat['Min Duration'] = Time.timeToString(stat['Min Duration'] + units, 4) + (minDuration.name === statType ? '' : ' (' + minDuration.name + ')');
+            stat['Max Duration'] = Time.timeToString(stat['Max Duration'] + units, 4) + (maxDuration.name === statType ? '' : ' (' + maxDuration.name + ')');
 
             // sort summary
             stat.summary.sort(summarySorter);
             // stringify durations
             Y.Array.each(stat.summary, function (summary) {
-                summary.Duration = msTimeToString(summary.Duration, 4);
+                summary.Duration = Time.timeToString(summary.Duration + units, 4);
             });
 
             stats[statType] = stat;
         });
-        stats.totalDuration = msTimeToString(maxTime - minTime, 4);
+        stats.totalDuration = maxTime - minTime;
 
         return stats;
     };
 
-    Waterfall.mergeWaterfalls = function () {
+    Waterfall.merge = function (waterfall1, waterfall2, timeShift, config) {
+        waterfall1.units = waterfall1.units || 'ms';
+        waterfall2.units = waterfall2.units || 'ms';
 
+        var mergedWaterfall = {
+                units: waterfall1.units,
+                headers: (waterfall1.headers && waterfall1.headers.slice(0)) || [],
+                rows: (waterfall1.rows && Y.clone(waterfall1.rows)) || [],
+                events: (waterfall1.events && Y.clone(waterfall1.events)) || []
+            },
+            shiftAndConvertTimes = function (rows) {
+                var rowsCopy = [];
+                Y.Array.each(rows, function (row) {
+                    var rowCopy = {
+                        durations: [],
+                        startTime: Time.convertTime(row.startTime + waterfall2.units, mergedWaterfall.units) + timeShift,
+                        endTime: Time.convertTime(row.endTime + waterfall2.units, mergedWaterfall.units) + timeShift
+                    };
+                    if (isNaN(rowCopy.startTime)) {
+                        delete rowCopy.startTime;
+                    }
+                    if (isNaN(rowCopy.endTime)) {
+                        delete rowCopy.endTime;
+                    }
+                    Y.Array.each(row.durations, function (duration) {
+                        var durationCopy = {};
+                        durationCopy.duration = Time.convertTime(duration.duration + waterfall2.units, mergedWaterfall.units);
+                        Y.mix(durationCopy, duration);
+                        rowCopy.durations.push(durationCopy);
+                    });
+                    rowCopy.details = row.details && shiftAndConvertTimes(row.details);
+                    Y.mix(rowCopy, row);
+                    rowsCopy.push(rowCopy);
+                });
+                return rowsCopy;
+            };
+
+        timeShift = timeShift ? Time.convertTime(timeShift, mergedWaterfall.units) : 0;
+
+        // Merge headers.
+        Y.Array.each(waterfall2.headers, function (header) {
+            if (mergedWaterfall.headers.indexOf(header) === -1) {
+                mergedWaterfall.headers.push(header);
+            }
+        });
+
+        // Merge rows.
+        Array.prototype.push.apply(mergedWaterfall.rows, shiftAndConvertTimes(waterfall2.rows));
+
+        // Merge events.
+        Y.Array.each(waterfall2.events, function (event) {
+            var eventCopy = {};
+            eventCopy.time = Time.convertTime(event.time + waterfall2.units, mergedWaterfall.units) + timeShift;
+            Y.mix(eventCopy, event);
+            mergedWaterfall.events.push(eventCopy);
+        });
+
+        // Compute merged stats.
+        mergedWaterfall.stats = Waterfall.computeStats(mergedWaterfall, config);
+
+        // Add summary.
+
+        mergedWaterfall.summary = {
+            Timeline: escape('<div style="text-align:right">' +
+                            'Total Execution Time: ' +
+                            Time.timeToString(mergedWaterfall.stats.totalDuration + mergedWaterfall.units, 4) + '</div>')
+        };
+
+        return mergedWaterfall;
     };
 
     Waterfall.prototype = {
@@ -495,7 +554,8 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
         getGui: function () {
             var waterfall = this.waterfall,
                 self = this,
-                createRows;
+                createRows,
+                absoluteEndTime = 0;
 
             if (waterfall) {
                 return waterfall;
@@ -504,8 +564,6 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
             this._disable();
 
             this._processCalls();
-
-            self.absoluteEndTime = 0;
 
             waterfall = {
                 headers: this.headers || [],
@@ -591,14 +649,14 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
                 }
                 rows.push(row);
 
-                self.absoluteEndTime = Math.max(self.absoluteEndTime, profile.endTime || 0);
+                absoluteEndTime = Math.max(absoluteEndTime, profile.endTime || 0);
                 return row;
             };
 
             // create events
             Y.Array.each(this.events, function (event) {
                 event.time = self._normalize(event.time);
-                self.absoluteEndTime = Math.max(self.absoluteEndTime, event.time || 0);
+                absoluteEndTime = Math.max(absoluteEndTime, event.time || 0);
             });
             waterfall.events = this.events;
 
@@ -614,7 +672,7 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
             waterfall.summary = {
                 Timeline: escape('<div style="text-align:right">' +
                                 'Total Execution Time: ' +
-                                Y.mojito.Waterfall.Time.msTimeToString(Waterfall._timeToMs(self.absoluteEndTime), 4) + '</div>')
+                                Time.msTimeToString(Waterfall._timeToMs(absoluteEndTime), 4) + '</div>')
             };
 
             this.waterfall = waterfall;
@@ -625,6 +683,11 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
         getSummary: function () {
             var waterfall = this.getGui();
             return Waterfall.getSummary(waterfall);
+        },
+
+        merge: function (otherWaterfall, timeShift) {
+            this.waterfall = Waterfall.merge(this.getGui(), otherWaterfall, timeShift, this.config);
+            return this.waterfall;
         },
 
         _processCalls: function () {
