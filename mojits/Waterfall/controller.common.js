@@ -18,7 +18,7 @@ YUI.add('mojito-waterfall-controller', function (Y, NAME) {
 
             ac.assets.addCss('./css/sorter.css');
             ac.assets.addCss('./css/waterfall_popup.css');
-            ac.assets.addCss('./css/waterfall_summary.css');
+            ac.assets.addCss('./css/waterfall_summary_popup.css');
             ac.assets.addCss('./css/waterfall_ruler.css');
             ac.assets.addCss('./css/waterfall_table.css');
 

@@ -9,73 +9,78 @@
 YUI.add('mojito-waterfall-popup', function (Y, NAME) {
     'use strict';
 
-    Y.namespace('mojito.Waterfall').Popup = function (tbody, container, update, columns, className) {
-        var popup = Y.Node.create('<div/>').addClass('popup').addClass(className).hide(),
-            self = this,
-            attachEvents = function (node, row, col) {
-                node.on('mouseover', function (e) {
-                    if (!e.button) {
-                        self.show();
-                        self.update(row, col);
-                        self.move(e.pageX, e.pageY);
-                    }
-                });
-                node.on('mouseup', function () {
-                    self.show();
-                });
-                node.on('mousemove', function (e) {
-                    self.move(e.pageX, e.pageY);
-                });
-                node.on('mouseout', function () {
-                    self.hide();
-                });
-            };
+    function Popup(container, selector, updateFn, moveFn, className) {
+        var popupNode = Y.Node.create('<div/>').addClass('popup').addClass(className).hide(),
+            self = this;
 
-        tbody.on('mousedown', function () {
+        self.node = popupNode;
+        self.container = container;
+        self.updateFn = updateFn;
+        self.moveFn = moveFn;
+
+        container.on('mousedown', function () {
             self.hide();
         });
 
-        tbody.all('> tr').each(function (tr, row) {
-            if (!columns) {
-                attachEvents(tr, row);
-                return;
-            }
-            tr.all('> td').each(function (td, col) {
-                if (columns.indexOf(col) !== -1) {
-                    attachEvents(td, row, col);
+        container.all(selector).each(function (node, i) {
+            node.on('mouseover', function (e) {
+                if (!e.button) {
+                    self.show();
+                    self.update(e, i);
+                    self.move(e, i);
                 }
+            });
+            node.on('mouseup', function () {
+                self.show();
+            });
+            node.on('mousemove', function (e) {
+                self.move(e, i);
+            });
+            node.on('mouseout', function () {
+                self.hide();
             });
         });
 
-        container.append(popup);
+        container.append(popupNode, 'after');
+    }
 
-        this.show = function () {
-            popup.show();
-        };
+    Popup.prototype = {
+        show: function () {
+            this.node.show();
+        },
 
-        this.hide = function () {
-            popup.hide();
-        };
+        hide: function () {
+            this.node.hide();
+        },
 
-        this.update = function (row, col) {
-            update(popup, row, col);
-        };
+        update: function (e, i) {
+            this.updateFn(e, i);
+        },
 
-        this.move = function (mouseX, mouseY) {
-            var topLimit = window.scrollY,
-                leftLimit = tbody.getX(),
-                rightLimit = tbody.get("offsetWidth") + tbody.getX(),
-                bottomLimit = tbody.get("offsetHeight") + tbody.getY(),
-                popupWidth = popup.get("offsetWidth"),
-                popupHeight = popup.get("offsetHeight"),
+        move: function (e, i) {
+            if (this.moveFn) {
+                this.moveFn(e, i);
+            }
+
+            var container = this.container,
+                mouseX = e.pageX,
+                mouseY = e.pageY,
+                topLimit = window.scrollY,
+                leftLimit = container.getX(),
+                rightLimit = container.get("offsetWidth") + container.getX(),
+                bottomLimit = container.get("offsetHeight") + container.getY(),
+                popupWidth = this.node.get("offsetWidth"),
+                popupHeight = this.node.get("offsetHeight"),
                 spacing = 10;
 
-            popup.setXY([
+            this.node.setXY([
                 Math.min(mouseX + spacing, Math.max(leftLimit, rightLimit - popupWidth)),
                 Math.max(Math.min(mouseY + spacing, bottomLimit - popupHeight), topLimit)
             ]);
-        };
+        }
     };
+
+    Y.namespace('mojito.Waterfall').Popup = Popup;
 }, '0.1.0', {
     requires: [
         'node'

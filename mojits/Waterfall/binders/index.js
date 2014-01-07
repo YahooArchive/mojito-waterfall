@@ -18,10 +18,11 @@ YUI.add('mojito-waterfall-binder-index', function (Y, NAME) {
 
         bind: function (node) {
             try {
-                var waterfall = new Y.mojito.Waterfall.GUI(this.mojitProxy.data.get('waterfall'));
-                node.append(waterfall.get());
+                var waterfallData = this.mojitProxy.data.get('waterfall');
+                node.append(new Y.mojito.Waterfall.GUI(waterfallData));
             } catch (e) {
-                node.append('<span class="error">Error: ' + e.message + '</span>');
+                node.append('<span class="exception error" title="' + e.stack + '">Error: ' + e.message + '</span>');
+                Y.log(e, 'error', NAME);
             }
         }
     };
