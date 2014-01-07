@@ -26,6 +26,23 @@ YUI.add('waterfall-tests', function (Y, NAME) {
             body.append(waterfallElement);
         },
 
+        compareObjects: function (expected, actual, path) {
+            path = path || 'root';
+
+            var self = this;
+
+            Assert.areEqual(typeof expected, typeof actual, 'Mismatching types. (' + path + ')');
+
+            if (typeof expected === 'object') {
+                //Assert.areEqual(Y.Object.size(expected), Y.Object.size(actual), 'Mismatching object size. (' + path + ')');
+                Y.each(expected, function (expectedValue, key) {
+                    self.compareObjects(expectedValue, actual[key], path + ', ' + key);
+                });
+            } else {
+                Assert.areEqual(expected, actual, 'Mismatching value. (' + path + ')');
+            }
+        },
+
         verifyProfile: function (expectedProfile, actualProfile) {
             var self = this;
 
@@ -231,6 +248,83 @@ YUI.add('waterfall-tests', function (Y, NAME) {
             });
 
             Assert.areSame("5.03ms", Time.msTimeToString(5.03125, 3));
+        },
+
+        'Test Merge Method': function () {
+            var waterfall1 = new Y.mojito.Waterfall({
+                    headers: [
+                        'header1'
+                    ]
+                }),
+                waterfall2 = new Y.mojito.Waterfall({
+                    headers: [
+                        'header2'
+                    ]
+                }),
+                time,
+                actual,
+                expected = {
+                    headers: [
+                        'Name',
+                        'header1',
+                        'header2'
+                    ],
+                    rows: [{
+                        Name: 'a1',
+                        details: [{
+                            Name: 'b1'
+                        }]
+                    }, {
+                        Name: 'z1 (1)'
+                    }, {
+                        Name: 'z1 (2)'
+                    }, {
+                        Name: 'a2',
+                        details: [{
+                            Name: 'b2'
+                        }]
+                    }, {
+                        Name: 'z1'
+                    }, {
+                        Name: 'z2'
+                    }],
+
+                    events: [{
+                        type: 'event1'
+                    }, {
+                        type: 'event2'
+                    }]
+                };
+
+            time = process.hrtime();
+
+            waterfall1.start('a1');
+            waterfall1.start('b1');
+            waterfall1.end('b1');
+            waterfall1.end('a1');
+            waterfall1.start('z1');
+            waterfall1.event('event1');
+            waterfall1.end('z1');
+            waterfall1.start('z1');
+            waterfall1.end('z1');
+
+            time = process.hrtime(time);
+
+            waterfall2.start('a2');
+            waterfall2.start('b2');
+            waterfall1.event('event2');
+            waterfall2.end('b2');
+            waterfall2.end('a2');
+            waterfall2.start('z1');
+            waterfall2.end('z1');
+            waterfall2.start('z2');
+            waterfall2.end('z2');
+
+            waterfall1.merge(waterfall2, time[1]);
+
+            actual = waterfall1.getGui();
+
+            this.compareObjects(expected, actual);
         }
 
     }));

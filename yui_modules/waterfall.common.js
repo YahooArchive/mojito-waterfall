@@ -420,6 +420,10 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
     };
 
     Waterfall.merge = function (waterfall1, waterfall2, timeShift, config) {
+
+        waterfall1 = (waterfall1.getGui && waterfall1.getGui()) || waterfall1;
+        waterfall2 = (waterfall2.getGui && waterfall2.getGui()) || waterfall2;
+
         waterfall1.units = waterfall1.units || 'ms';
         waterfall2.units = waterfall2.units || 'ms';
 
@@ -686,7 +690,7 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
         },
 
         merge: function (otherWaterfall, timeShift) {
-            this.waterfall = Waterfall.merge(this.getGui(), otherWaterfall, timeShift, this.config);
+            this.waterfall = Waterfall.merge(this, otherWaterfall, timeShift, this.config);
             return this.waterfall;
         },
 
@@ -824,6 +828,7 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
 
 }, '0.1.0', {
     requires: [
+        'base',
         'mojito-waterfall-time'
     ]
 });
