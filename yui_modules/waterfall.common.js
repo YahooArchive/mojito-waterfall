@@ -173,15 +173,21 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
         this._calls = [];
     }
 
-    Waterfall._now = isBrowser ? ((window.performance && (
-        window.performance.now    ||
-        window.performance.mozNow ||
-        window.performance.msNow  ||
-        window.performance.oNow   ||
-        window.performance.webkitNow
-    )) || function () {
-        return new Date().getTime();
-    }) : process.hrtime;
+    Waterfall.now = (function () {
+        if (!isBrowser) {
+            return process.hrtime;
+        }
+
+        if (window.top.performance && window.top.performance.now) {
+            return function () {
+                return window.top.performance.now();
+            };
+        }
+
+        return function () {
+            return new Date().getTime();
+        };
+    }());
 
     Waterfall._timeToMs = function (time) {
         return isBrowser ? time : time / 1e6;
@@ -431,7 +437,9 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
                 units: waterfall1.units,
                 headers: (waterfall1.headers && waterfall1.headers.slice(0)) || [],
                 rows: (waterfall1.rows && Y.clone(waterfall1.rows)) || [],
-                events: (waterfall1.events && Y.clone(waterfall1.events)) || []
+                events: (waterfall1.events && Y.clone(waterfall1.events)) || [],
+                absoluteStartTime: Math.min(waterfall1.absoluteStartTime,
+                    Time.convertTime(waterfall2.absoluteStartTime + waterfall2.units, waterfall1.units))
             },
             shiftAndConvertTimes = function (rows) {
                 var rowsCopy = [];
@@ -501,7 +509,7 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
         },
 
         start: function (profileKey, data) {
-            var time = Waterfall._now();
+            var time = Waterfall.now();
             this._calls.push({
                 profileKey: profileKey,
                 time: time,
@@ -512,7 +520,7 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
         },
 
         end: function (profileKey, data) {
-            var time = Waterfall._now();
+            var time = Waterfall.now();
             this._calls.push({
                 time: time,
                 profileKey: profileKey,
@@ -523,7 +531,7 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
         },
 
         event: function (name, data) {
-            var time = Waterfall._now();
+            var time = Waterfall.now();
             this._calls.push({
                 time: time,
                 type: 'event',
@@ -570,11 +578,13 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
             this._processCalls();
 
             waterfall = {
+                config: this.config,
                 headers: this.headers || [],
                 rows: [],
                 units: isBrowser ? 'ms' : 'ns',
                 events: [],
-                summary: {}
+                summary: {},
+                absoluteStartTime: this.absoluteStartTime[0] * 1e9 + this.absoluteStartTime[1]
             };
 
             // add mandatory 'Name' header

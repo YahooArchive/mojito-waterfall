@@ -16,6 +16,7 @@ YUI.add('mojito-waterfall-summary-popup', function (Y, NAME) {
             PHASES_DESCRIPTION = "Phases start and elapsed time relative to the start:",
             EVENTS_DESCRIPTION = "Event timing relative to the start:",
             EVENT_DISTANCE_THRESHOLD = 5,
+            PROFILE_DISTANCE_THRESHOLD = 5,
             profileSummaryNodes = [],
             eventsSummaryNodes = [],
             isProfileSummary = false,
@@ -94,7 +95,7 @@ YUI.add('mojito-waterfall-summary-popup', function (Y, NAME) {
             table.append("<tr><td colspan='4' class='vertical-space'></td></tr>");
 
             // phases description
-            table.append("<tr class='breakdown-description'><td colspan='4' class='description'>" + PHASES_DESCRIPTION + "</td></tr>");
+            table.append("<tr class='breakdown-description'><td colspan='4' class='description' nowrap>" + PHASES_DESCRIPTION + "</td></tr>");
 
             // breakdowns
             Y.each(summaries[row].durations, function (duration) {
@@ -169,24 +170,45 @@ YUI.add('mojito-waterfall-summary-popup', function (Y, NAME) {
             return null;
         }
 
+        function isOverProfile(mouseX, row) {
+            var summary = summaries[row],
+                pixelWidth = lastColumn.get('offsetWidth') - lastColumn.getStyle('paddingRight').replace('px', ''),
+                left = lastColumn.getX(),
+                profileStartX = summary.startTime * pixelWidth / timeWidth,
+                profileEndX = summary.endTime * pixelWidth / timeWidth;
+
+            mouseX = mouseX - left;
+
+            return mouseX >= profileStartX - PROFILE_DISTANCE_THRESHOLD &&
+                   mouseX <= profileEndX + PROFILE_DISTANCE_THRESHOLD;
+        }
+
         popup = new Y.mojito.Waterfall.Popup(waterfallTable, '> tbody > tr > td:last-child', function (e, row) {
             var closeEvents = getCloseEvents(e.pageX);
 
             if (closeEvents) {
                 setEventsSummary(closeEvents);
+                popup.show();
                 isProfileSummary = false;
-            } else {
+            } else if (isOverProfile(e.pageX, row)) {
                 setProfileSummary(row);
                 isProfileSummary = true;
+                popup.show();
+            } else {
+                popup.hide();
             }
         }, function (e, row) {
             var closeEvents = getCloseEvents(e.pageX);
 
             if (closeEvents) {
                 setEventsSummary(closeEvents);
+                popup.show();
                 isProfileSummary = false;
+            } else if (!isOverProfile(e.pageX, row)) {
+                popup.hide();
             } else if (!isProfileSummary) {
                 setProfileSummary(row);
+                isProfileSummary = true;
             }
         }, 'waterfall-summary');
 

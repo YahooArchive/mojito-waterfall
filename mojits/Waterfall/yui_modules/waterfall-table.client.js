@@ -176,6 +176,7 @@ YUI.add('mojito-waterfall-table', function (Y, NAME) {
                 relativeTime = 0,
                 summary = {
                     "startTime": row.startTime - startTime,
+                    "endTime": row.startTime - startTime,
                     "durations": []
                 },
                 tableDataRow = {
@@ -288,6 +289,7 @@ YUI.add('mojito-waterfall-table', function (Y, NAME) {
                 }
                 index++;
 
+                summary.endTime += duration.duration;
                 summary.durations.push({
                     "startTime": relativeTime,
                     "duration": duration.duration,

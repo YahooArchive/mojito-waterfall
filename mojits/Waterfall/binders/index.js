@@ -14,12 +14,13 @@ YUI.add('mojito-waterfall-binder-index', function (Y, NAME) {
 
         init: function (mojitProxy) {
             this.mojitProxy = mojitProxy;
+            this.waterfall = this.mojitProxy.data.get('waterfall');
         },
 
         bind: function (node) {
             try {
-                var waterfallData = this.mojitProxy.data.get('waterfall');
-                node.append(new Y.mojito.Waterfall.GUI(waterfallData));
+                node.set('innerHTML', '');
+                node.append(new Y.mojito.Waterfall.GUI(this.waterfall));
             } catch (e) {
                 node.append('<span class="exception error" title="' + e.stack + '">Error: ' + e.message + '</span>');
                 Y.log(e, 'error', NAME);
