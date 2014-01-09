@@ -20,21 +20,21 @@ YUI.add('mojito-waterfall-ruler', function (Y, NAME) {
         ruler.append(Y.Node.create('<div/>').addClass('bottom lines'));
         ruler.append(length);
 
-        function eventIsOverLastColumn(e) {
+        function mouseIsOverLastColumn(e) {
             return e.pageX >= lastColumn.getX() && e.pageX <= lastColumn.getX() + lastColumn.get('offsetWidth');
         }
 
         tbody.on('mousedown', function (e) {
-            if (e.button === 1 && eventIsOverLastColumn(e)) {
+            if (e.button === 1 && mouseIsOverLastColumn(e)) {
                 self.start(e.pageX, e.pageY);
             }
         });
 
         tbody.on('mousemove', function (e) {
-            if (!eventIsOverLastColumn(e)) {
+            if (!mouseIsOverLastColumn(e)) {
                 self.end();
             } else if (self.isEnabled()) {
-                self.update(e.pageX, e.pageY, e.target.get('offsetWidth') - e.target.getStyle('paddingRight').replace('px', ''), timeLineDuration);
+                self.update(e.pageX, e.pageY, lastColumn.get('offsetWidth') - lastColumn.getStyle('paddingRight').replace('px', ''), timeLineDuration);
             }
         });
 
