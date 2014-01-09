@@ -10,7 +10,7 @@
 YUI.add('mojito-waterfall-ruler', function (Y, NAME) {
     'use strict';
 
-    function Ruler(tbody, timeLineLengthMs) {
+    function Ruler(tbody, timeLineDuration, units) {
         var self = this,
             ruler = Y.Node.create('<div/>').addClass('waterfall-ruler').hide(),
             length = Y.Node.create('<div/>').addClass('light length'),
@@ -34,7 +34,7 @@ YUI.add('mojito-waterfall-ruler', function (Y, NAME) {
             if (!eventIsOverLastColumn(e)) {
                 self.end();
             } else if (self.isEnabled()) {
-                self.update(e.pageX, e.pageY, e.target.get('offsetWidth') - e.target.getStyle('paddingRight').replace('px', ''), timeLineLengthMs);
+                self.update(e.pageX, e.pageY, e.target.get('offsetWidth') - e.target.getStyle('paddingRight').replace('px', ''), timeLineDuration);
             }
         });
 
@@ -46,6 +46,7 @@ YUI.add('mojito-waterfall-ruler', function (Y, NAME) {
         this._isEnabled = false;
 
         this.node = ruler;
+        this.units = units;
 
         return ruler;
     }
@@ -62,7 +63,7 @@ YUI.add('mojito-waterfall-ruler', function (Y, NAME) {
             this._isEnabled = true;
         },
 
-        update: function (mouseX, mouseY, timeLineWidthPx, timeLineLengthMs) {
+        update: function (mouseX, mouseY, timeLineWidthPx, timeLineDuration) {
 
             var time;
             // move ruler and set width/height
@@ -78,8 +79,8 @@ YUI.add('mojito-waterfall-ruler', function (Y, NAME) {
                      .setStyle('height', Math.abs(this.startY - mouseY));
 
             // update time length
-            time = (Math.abs(this.startX - mouseX) / timeLineWidthPx) * timeLineLengthMs;
-            this._length.set('text', Y.mojito.Waterfall.Time.msTimeToString(time, 3));
+            time = (Math.abs(this.startX - mouseX) / timeLineWidthPx) * timeLineDuration;
+            this._length.set('text', Y.mojito.Waterfall.Time.timeToString(time + this.units, 3));
             this._length.setStyle('marginLeft', -1 * this._length.getStyle('width').replace('px', '') / 2);
         },
 

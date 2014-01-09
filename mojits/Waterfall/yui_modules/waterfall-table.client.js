@@ -14,20 +14,20 @@ YUI.add('mojito-waterfall-table', function (Y, NAME) {
 
         var COLORS = ["#3C953C", "#4465A7", "#993399", "#D63333", "#FF6600", "#CCCC00", "#A1A1A1"],
             EVENT_COLORS = ["#3355ff", "#ff3355", "#11cc22"],
+            Time = Y.mojito.Waterfall.Time,
             table = Y.Node.create("<table cellpadding='0' cellspacing='0'/>").addClass('waterfall-table'),
             thead = Y.Node.create("<thead/>"),
             tbody = Y.Node.create("<tbody/>"),
             tfoot = Y.Node.create("<tfoot/>"),
             tr,
             td,
+            units = data.units = data.units || 'ms',
             startTime = Number.MAX_VALUE,
             endTime = Number.MIN_VALUE,
             numEvents = data.events ? data.events.length : 0,
             summaries = [],
             sortHeaders = [],
             tableData = [],
-            msTimeToString = Y.mojito.Waterfall.Time.msTimeToString,
-            timeToMs = Y.mojito.Waterfall.Time.timeToMs,
             createRow,
             normalizeTimes,
             getAbsoluteTimes,
@@ -35,26 +35,6 @@ YUI.add('mojito-waterfall-table', function (Y, NAME) {
 
         data = data || {};
         data.rows = data.rows || [];
-
-        // convert all times to ms
-        normalizeTimes = function (rows) {
-            Y.Array.each(rows, function (row) {
-                row.startTime = data.units && typeof row.startTime === "number" ? row.startTime + data.units : row.startTime;
-                row.startTime = timeToMs(row.startTime);
-                Y.each(row.durations, function (duration) {
-                    duration.duration = data.units && typeof duration.duration === "number" ? duration.duration + data.units : duration.duration;
-                    duration.duration = timeToMs(duration.duration);
-                });
-                if (Y.Lang.isArray(row.details)) {
-                    normalizeTimes(row.details);
-                }
-            });
-        };
-        normalizeTimes(data.rows);
-        Y.each(data.events, function (event) {
-            event.time = data.units && typeof event.time === "number" ? event.time + data.units : event.time;
-            event.time = timeToMs(event.time);
-        });
 
         // create header
         // add timeline to headers if not present
@@ -311,7 +291,7 @@ YUI.add('mojito-waterfall-table', function (Y, NAME) {
             timeSlice.setStyle("width", Math.min(99.9999, 100 * timeSliceDuration / (endTime - startTime)) + "%");
 
             timeSlice.setStyle("left", ((100 * (row.startTime - startTime) / (endTime - startTime)) + "%"));
-            timeSliceDurationText.append(msTimeToString(timeSliceDuration, 3));
+            timeSliceDurationText.append(Time.timeToString(timeSliceDuration + units, 3));
 
             timeSlice.append(timeSliceTr);
 
@@ -372,8 +352,8 @@ YUI.add('mojito-waterfall-table', function (Y, NAME) {
             event.time = event.time - startTime;
         });
 
-        table.append(new Y.mojito.Waterfall.SummaryPopup(summaries, data.events, endTime - startTime, table));
-        table.append(new Y.mojito.Waterfall.Ruler(tbody, endTime - startTime));
+        table.append(new Y.mojito.Waterfall.SummaryPopup(summaries, data.events, endTime - startTime, table, units));
+        table.append(new Y.mojito.Waterfall.Ruler(tbody, endTime - startTime, units));
 
         return table;
     }
