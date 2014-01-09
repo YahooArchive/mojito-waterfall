@@ -147,7 +147,7 @@
     margin-right: 2px;
     cursor: pointer;
     margin-top: -1px;
-    background: url('../images/plus.png') no-repeat scroll 0 0 transparent;
+    background: url('/static/Waterfall/assets/images/plus.png') no-repeat scroll 0 0 transparent;
 }
 
 .waterfall-table .no-select {
@@ -161,7 +161,7 @@
 }
 
 .waterfall-table .toggle.expanded {
-    background: url('../images/minus.png') no-repeat scroll 0 0 transparent;
+    background: url('/static/Waterfall/assets/images/minus.png') no-repeat scroll 0 0 transparent;
 }
 
 .waterfall fieldset > legend {
