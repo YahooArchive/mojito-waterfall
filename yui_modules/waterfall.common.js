@@ -4,7 +4,7 @@
  * See the accompanying LICENSE file for terms.
  */
 
-/*jslint browser: true, node: true, regexp: true, nomen: true, evil: true, plusplus: true */
+/*jslint browser: true, node: true, regexp: true, nomen: true, evil: true, plusplus: true, continue: true */
 /*global YUI, escape */
 
 YUI.add('mojito-waterfall', function (Y, NAME) {
@@ -297,8 +297,9 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
         return statStr;
     };
 
-    Waterfall.computeStats = function (waterfall, config) {
+    Waterfall.computeStats = function (waterfall) {
         var stats = {},
+            config = waterfall.config,
             units = waterfall.units || '',
             minTime,
             maxTime,
@@ -434,6 +435,7 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
         waterfall2.units = waterfall2.units || 'ms';
 
         var mergedWaterfall = {
+                config: config || waterfall1.config || waterfall2.config,
                 units: waterfall1.units,
                 headers: (waterfall1.headers && waterfall1.headers.slice(0)) || [],
                 rows: (waterfall1.rows && Y.clone(waterfall1.rows)) || [],
@@ -489,7 +491,7 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
         });
 
         // Compute merged stats.
-        mergedWaterfall.stats = Waterfall.computeStats(mergedWaterfall, config);
+        mergedWaterfall.stats = Waterfall.computeStats(mergedWaterfall);
 
         // Add summary.
 
@@ -584,7 +586,7 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
                 units: isBrowser ? 'ms' : 'ns',
                 events: [],
                 summary: {},
-                absoluteStartTime: this.absoluteStartTime[0] * 1e9 + this.absoluteStartTime[1]
+                absoluteStartTime: isBrowser ? this.absoluteStartTime : this.absoluteStartTime[0] * 1e9 + this.absoluteStartTime[1]
             };
 
             // add mandatory 'Name' header
@@ -680,7 +682,7 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
             waterfall.rows = waterfall.rows[0].details;
 
             // calculate statistics
-            waterfall.stats = Waterfall.computeStats(waterfall, this.config);
+            waterfall.stats = Waterfall.computeStats(waterfall);
 
             // add summary
             waterfall.summary = {

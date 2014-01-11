@@ -190,9 +190,10 @@ YUI.add('mojito-waterfall-summary-popup', function (Y, NAME) {
                    mouseX <= profileEndX + PROFILE_DISTANCE_THRESHOLD;
         }
 
+        // Make lastColumn properties invalid, so that the correct ones are used later.
         Y.on('resize', function () {
-            lastColumnWidth = lastColumn.get('offsetWidth');
-            lastColumnLeft = lastColumn.get('offsetLeft');
+            lastColumnWidth = null;
+            lastColumnLeft = null;
         });
 
         popup = new Y.mojito.Waterfall.Popup(waterfallTable, '> tbody > tr > td:last-child', function (e, row) {
