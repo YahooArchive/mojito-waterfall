@@ -21,6 +21,9 @@ YUI.add('mojito-waterfall-summary-popup', function (Y, NAME) {
             eventsSummaryNodes = [],
             isProfileSummary = false,
             lastColumn = waterfallTable.one('tbody > tr > td:last-child'),
+            lastColumnPadding = lastColumn.getStyle('paddingRight').replace('px', ''),
+            lastColumnWidth,
+            lastColumnLeft,
             popup;
 
         function setEventsSummary(closeEvents) {
@@ -132,9 +135,13 @@ YUI.add('mojito-waterfall-summary-popup', function (Y, NAME) {
         }
 
         function getCloseEvents(mouseX) {
+            // Update lastColum properties if they haven't been set.
+            lastColumnLeft = lastColumnLeft || lastColumn.getX();
+            lastColumnWidth = lastColumnWidth || lastColumn.get('offsetWidth');
+
             // Determine if close to events
-            var pixelWidth = lastColumn.get('offsetWidth') - lastColumn.getStyle('paddingRight').replace('px', ''),
-                left = lastColumn.getX(),
+            var pixelWidth = lastColumnWidth - lastColumnPadding,//lastColumn.get('offsetWidth') - lastColumn.getStyle('paddingRight').replace('px', ''),
+                left = lastColumnLeft,//lastColumn.getX(),
                 eventDistances = [],
                 closeEvents = [];
 
@@ -172,8 +179,8 @@ YUI.add('mojito-waterfall-summary-popup', function (Y, NAME) {
 
         function isOverProfile(mouseX, row) {
             var summary = summaries[row],
-                pixelWidth = lastColumn.get('offsetWidth') - lastColumn.getStyle('paddingRight').replace('px', ''),
-                left = lastColumn.getX(),
+                pixelWidth = lastColumnWidth - lastColumnPadding,//lastColumn.get('offsetWidth') - lastColumn.getStyle('paddingRight').replace('px', ''),
+                left = lastColumnLeft,//lastColumn.getX(),
                 profileStartX = summary.startTime * pixelWidth / timeWidth,
                 profileEndX = summary.endTime * pixelWidth / timeWidth;
 
@@ -182,6 +189,11 @@ YUI.add('mojito-waterfall-summary-popup', function (Y, NAME) {
             return mouseX >= profileStartX - PROFILE_DISTANCE_THRESHOLD &&
                    mouseX <= profileEndX + PROFILE_DISTANCE_THRESHOLD;
         }
+
+        Y.on('resize', function () {
+            lastColumnWidth = lastColumn.get('offsetWidth');
+            lastColumnLeft = lastColumn.get('offsetLeft');
+        });
 
         popup = new Y.mojito.Waterfall.Popup(waterfallTable, '> tbody > tr > td:last-child', function (e, row) {
             var closeEvents = getCloseEvents(e.pageX);
