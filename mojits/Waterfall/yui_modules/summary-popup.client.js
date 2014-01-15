@@ -29,7 +29,7 @@ YUI.add('mojito-waterfall-summary-popup', function (Y, NAME) {
         function setEventsSummary(closeEvents) {
             popup.node.set('innerHTML', '');
 
-            var table = Y.Node.create('<table cellspacing="3px"></table>');
+            var table = Y.Node.create('<table/>');
 
             // vertical space
             table.append("<tr><td colspan='4' class='vertical-space'></td></tr>");
@@ -79,7 +79,7 @@ YUI.add('mojito-waterfall-summary-popup', function (Y, NAME) {
                 return;
             }
 
-            var table = profileSummaryNodes[row] = Y.Node.create("<table cellspacing='3px'></table>"),
+            var table = profileSummaryNodes[row] = Y.Node.create("<table/>"),
                 tr,
                 td;
 

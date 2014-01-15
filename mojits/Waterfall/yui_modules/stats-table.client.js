@@ -62,7 +62,7 @@ YUI.add('mojito-waterfall-stats-table', function (Y, NAME) {
             if (!summary || summary.length === 0) {
                 return;
             }
-            popupSummary = Y.Node.create("<table cellspacing='10px' cellpadding='3px'/>").addClass('stat');
+            popupSummary = Y.Node.create("<table/>").addClass('stat');
             // create header
             thead = Y.Node.create("<thead/>").addClass('stat-popup');
             tr = Y.Node.create("<tr/>");
