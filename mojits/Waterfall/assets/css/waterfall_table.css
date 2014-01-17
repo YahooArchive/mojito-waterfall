@@ -61,23 +61,44 @@
 }
 
 .waterfall-table > tbody > tr > td {
-    border-top: 1px solid #ddd;
+    /*border-top: 1px solid #ddd;*/ /* Taken care of by simulated border */
     white-space: nowrap;
     padding: 1px 8px 1px 4px;
-    height: 22px
+    height: 22px;
+    position: relative;
 }
+
+.stats.waterfall-table > tbody > tr > td {
+    border-top: 1px solid #ddd;
+}
+
 
 .waterfall-table > tbody > tr > td:first-child {
     width: 1px; /*TODO: force first column to smallest width*/
 }
 
-.waterfall-table > tbody > tr > td:last-child {
+.waterfall-table > tbody > tr > .timeline {
     width: 100%;
-    padding: 0 5em 0 0;
+    padding: 0;
     vertical-align: bottom;
+    border-top: none; /* Instead the border is simulated using a div such that the border does not go over event lines */
 }
 
-.waterfall-table .timeline {
+.waterfall-table > tbody > tr > td .simulated-border {
+    position: absolute;
+    width: 100%;
+    border-top: 1px solid #ddd;
+    top: 0;
+    left: 0;
+}
+
+.waterfall-table > tbody > tr > td:last-child {
+   width: 5px; /* Space on the right of the table for any profile time text */
+   padding: 0;
+   margin: 0;
+}
+
+.waterfall-table .profile {
     float: left;
     border-collapse: collapse;
     margin-top: 1px;
@@ -85,7 +106,7 @@
     position: relative;
 }
 
-.waterfall-table .timeline td {
+.waterfall-table .profile td {
     height: 18px;
     min-width: 0;
 }
@@ -111,12 +132,14 @@
 }
 
 .waterfall-table .event-line {
-    position: relative;
+    position: absolute;
+    top: 0;
     float: left;
     height: 100%;
     width: 0;
     z-index: 1;
     opacity: 0.75;
+    pointer-events: none;
 }
 
 .waterfall-table .gradient {
@@ -129,13 +152,13 @@
     filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#b3f7f7f7', endColorstr='#33f7f7f7',GradientType=0 ); /* IE6-9 */
 }
 
-.waterfall-table .timeline .duration {
+.waterfall-table .profile .duration {
     margin-left: 0.2em;
     position: absolute;
     line-height: 0;
 }
 
-.waterfall-table .timeline .light {
+.waterfall-table .profile .light {
     color: #777;
 }
 
@@ -174,8 +197,44 @@
     border: 2px groove threedface;
 }
 
+
+/* Stats Table */
+
 .stats.waterfall-table > tbody > tr > td:last-child {
     width: 100%;
     padding: 1px 8px 1px 4px;
     vertical-align: middle;
 }
+
+
+/* Event Filters */
+
+
+.waterfall .event-filters .filter {
+    margin: 3px 15px 3px 0;
+    display: inline-block;
+    position: relative;
+}
+
+.waterfall .event-filters .filter input {
+    margin-right: 3px;
+}
+
+.waterfall .event-filters .filter span.real {
+    position: absolute;
+    top: 0;
+    left: 15px;
+}
+
+.waterfall .event-filters .filter span.real:hover {
+    font-weight: bold;
+}
+
+.event-filters .filter span.fake {
+    font-weight: bold;
+    color: transparent;
+    padding-right: 1em;
+}
+
+
+

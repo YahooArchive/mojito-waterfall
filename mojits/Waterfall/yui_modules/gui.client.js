@@ -10,10 +10,18 @@ YUI.add('mojito-waterfall-gui', function (Y, NAME) {
     'use strict';
 
     function WaterfallGUI(data) {
-        var container = Y.Node.create('<div/>').addClass('waterfall');
+
+        var container = Y.Node.create('<div/>').addClass('waterfall'),
+            waterfallTable = new Y.mojito.Waterfall.Table(data);
 
         // Append Waterfall table.
-        container.append(new Y.mojito.Waterfall.Table(data));
+        container.append(waterfallTable);
+
+        // Append events filters.
+        if (data.eventFilters && data.events && data.events.length > 0) {
+            container.append('<br/>');
+            container.append(new Y.mojito.Waterfall.EventFilters(data.events, waterfallTable, data.eventFilters));
+        }
 
         // Append Waterfall stats table.
         if (data.stats) {
@@ -30,6 +38,7 @@ YUI.add('mojito-waterfall-gui', function (Y, NAME) {
     requires: [
         'node',
         'mojito-waterfall-table',
+        'mojito-waterfall-event-filters',
         'mojito-waterfall-stats-table'
     ]
 });
