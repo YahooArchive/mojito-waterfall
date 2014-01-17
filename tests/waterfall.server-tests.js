@@ -250,6 +250,50 @@ YUI.add('waterfall-tests', function (Y, NAME) {
             Assert.areSame("5.03ms", Time.msTimeToString(5.03125, 3));
         },
 
+        'Test classes and groups': function () {
+            var waterfall = new Y.mojito.Waterfall({
+                classes: {
+                    food: {
+                        kind: 'food'
+                    },
+                    fruit: {
+                        group: ['fruit', 'food'],
+                        'class': 'food'
+                    },
+                    apple: {
+                        'class': 'fruit'
+                    },
+                    banana: {
+                        'class': ['fruit'],
+                        group: 'yellow'
+                    }
+                }
+            });
+
+            waterfall.event('apple', {
+                'class': 'apple'
+            });
+
+            waterfall.event('banana', {
+                'class': 'banana',
+                group: 'ripe banana'
+            });
+
+            waterfall = waterfall.getGui();
+
+            this.compareObjects({
+                'kind': 'food',
+                'class': ['apple', 'fruit', 'food'],
+                'group': ['fruit', 'food']
+            }, waterfall.events[0]);
+
+            this.compareObjects({
+                'kind': 'food',
+                'class': ['banana', 'fruit', 'food'],
+                'group': ['ripe banana', 'yellow', 'fruit', 'food']
+            }, waterfall.events[1]);
+        },
+
         'Test Merge Method': function () {
             var waterfall1 = new Y.mojito.Waterfall({
                     headers: [

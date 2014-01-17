@@ -451,8 +451,8 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
                     if (newClassArray) {
                         newClassArray = Y.Lang.isArray(newClassArray) ? newClassArray : [newClassArray];
                         for (j = 0; j < newClassArray.length; j++) {
-                            if (data.classes.indexOf(newClassArray[j]) === -1) {
-                                data.classes.push(newClassArray[j]);
+                            if (data['class'].indexOf(newClassArray[j]) === -1) {
+                                data['class'].push(newClassArray[j]);
                             }
                         }
                     }
