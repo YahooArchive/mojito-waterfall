@@ -426,6 +426,72 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
         return stats;
     };
 
+    Waterfall.expandClasses = function (waterfall) {
+        var classes = waterfall.config && waterfall.config.classes,
+            expandClasses = function (data) {
+                var newClassArray,
+                    newGroupArray,
+                    i,
+                    j;
+                if (!data['class']) {
+                    return;
+                }
+                data['class'] = Y.Lang.isArray(data['class']) ? data['class'] : [data['class']];
+                data.group = data.group ? (Y.Lang.isArray(data.group) ? data.group : [data.group]) : [];
+
+                for (i = 0; i < data['class'].length; i++) {
+                    Y.mix(data, classes[data['class'][i]], false, null, true);
+                    if (!classes[data['class'][i]]) {
+                        continue;
+                    }
+                    // If the class data itself contains classes, append these classes to the data,
+                    // such that the new classes data get merged as well.
+                    newClassArray = classes[data['class'][i]]['class'];
+                    newGroupArray = classes[data['class'][i]].group;
+                    if (newClassArray) {
+                        newClassArray = Y.Lang.isArray(newClassArray) ? newClassArray : [newClassArray];
+                        for (j = 0; j < newClassArray.length; j++) {
+                            if (data.classes.indexOf(newClassArray[j]) === -1) {
+                                data.classes.push(newClassArray[j]);
+                            }
+                        }
+                    }
+
+                    if (newGroupArray) {
+                        newGroupArray = Y.Lang.isArray(newGroupArray) ? newGroupArray : [newGroupArray];
+                        for (j = 0; j < newGroupArray.length; j++) {
+                            if (data.group.indexOf(newGroupArray[j]) === -1) {
+                                data.group.push(newGroupArray[j]);
+                            }
+                        }
+                    }
+                }
+                if (data.group.length === 0) {
+                    delete data.group;
+                }
+            };
+
+        if (!Y.Lang.isObject(classes)) {
+            return;
+        }
+
+        // Expand row classes.
+        (function expandRowClasses(rows) {
+            if (!Y.Lang.isArray(rows)) {
+                return;
+            }
+            Y.Array.each(rows, function (row) {
+                expandClasses(row);
+                expandRowClasses(row.details);
+            });
+        }(waterfall.rows));
+
+        // Expand event classes.
+        Y.Array.each(waterfall.events, function (event) {
+            expandClasses(event);
+        });
+    };
+
     Waterfall.merge = function (waterfall1, waterfall2, timeShift, config) {
 
         waterfall1 = (waterfall1.getGui && waterfall1.getGui()) || waterfall1;
@@ -434,12 +500,16 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
         waterfall1.units = waterfall1.units || 'ms';
         waterfall2.units = waterfall2.units || 'ms';
 
+        // Merge configs, with specified config taking precedence.
+        config = Y.merge(waterfall2.config, waterfall1.config, config);
+
         var mergedWaterfall = {
-                config: config || waterfall1.config || waterfall2.config,
+                config: config,
                 units: waterfall1.units,
                 headers: (waterfall1.headers && waterfall1.headers.slice(0)) || [],
                 rows: (waterfall1.rows && Y.clone(waterfall1.rows)) || [],
                 events: (waterfall1.events && Y.clone(waterfall1.events)) || [],
+                eventFilters: config.eventFilters,
                 absoluteStartTime: Math.min(waterfall1.absoluteStartTime,
                     Time.convertTime(waterfall2.absoluteStartTime + waterfall2.units, waterfall1.units))
             },
@@ -494,12 +564,14 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
         mergedWaterfall.stats = Waterfall.computeStats(mergedWaterfall);
 
         // Add summary.
-
         mergedWaterfall.summary = {
             Timeline: escape('<div style="text-align:right">' +
                             'Total Execution Time: ' +
                             Time.timeToString(mergedWaterfall.stats.totalDuration + mergedWaterfall.units, 4) + '</div>')
         };
+
+        // Make sure all classes are expanded, given the new config.
+        Waterfall.expandClasses(mergedWaterfall, config);
 
         return mergedWaterfall;
     };
@@ -586,6 +658,7 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
                 units: isBrowser ? 'ms' : 'ns',
                 events: [],
                 summary: {},
+                eventFilters: this.config && this.config.eventFilters,
                 absoluteStartTime: isBrowser ? this.absoluteStartTime : this.absoluteStartTime[0] * 1e9 + this.absoluteStartTime[1]
             };
 
@@ -690,6 +763,9 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
                                 'Total Execution Time: ' +
                                 Time.msTimeToString(Waterfall._timeToMs(absoluteEndTime), 4) + '</div>')
             };
+
+            // expand classes
+            Waterfall.expandClasses(waterfall);
 
             this.waterfall = waterfall;
 
