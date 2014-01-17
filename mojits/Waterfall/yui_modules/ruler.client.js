@@ -12,29 +12,23 @@ YUI.add('mojito-waterfall-ruler', function (Y, NAME) {
 
     function Ruler(tbody, timeLineDuration, units) {
         var self = this,
-            ruler = Y.Node.create('<div/>').addClass('waterfall-ruler').hide(),
-            length = Y.Node.create('<div/>').addClass('light length'),
-            lastColumn = tbody.one('> tr > td:last-child');
+            ruler = Y.Node.create('<div/>').addClass('waterfall-ruler no-select').hide(),
+            length = Y.Node.create('<div/>').addClass('light length no-select'),
+            timelineColumn = tbody.one('> tr > td.timeline');
 
-        ruler.append(Y.Node.create('<div/>').addClass('top lines'));
-        ruler.append(Y.Node.create('<div/>').addClass('bottom lines'));
+        ruler.append(Y.Node.create('<div/>').addClass('top lines no-select'));
+        ruler.append(Y.Node.create('<div/>').addClass('bottom lines no-select'));
         ruler.append(length);
 
-        function mouseIsOverLastColumn(e) {
-            return e.pageX >= lastColumn.getX() && e.pageX <= lastColumn.getX() + lastColumn.get('offsetWidth');
-        }
-
         tbody.on('mousedown', function (e) {
-            if (e.button === 1 && mouseIsOverLastColumn(e)) {
+            if (e.button === 1) {
                 self.start(e.pageX, e.pageY);
             }
         });
 
         tbody.on('mousemove', function (e) {
-            if (!mouseIsOverLastColumn(e)) {
-                self.end();
-            } else if (self.isEnabled()) {
-                self.update(e.pageX, e.pageY, lastColumn.get('offsetWidth') - lastColumn.getStyle('paddingRight').replace('px', ''), timeLineDuration);
+            if (self.isEnabled()) {
+                self.update(e.pageX, e.pageY, timelineColumn.get('offsetWidth'), timeLineDuration);
             }
         });
 
