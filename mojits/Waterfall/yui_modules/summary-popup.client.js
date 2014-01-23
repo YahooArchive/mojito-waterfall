@@ -139,8 +139,8 @@ YUI.add('mojito-waterfall-summary-popup', function (Y, NAME) {
 
         function getCloseEvents(mouseX) {
             // Update lastColum properties if they haven't been set.
-            timelineColumnLeft = timelineColumnLeft || timelineColumn.getX();
-            timelineColumnWidth = timelineColumnWidth || timelineColumn.get('offsetWidth');
+            timelineColumnLeft = timelineColumn.getX();
+            timelineColumnWidth = timelineColumn.get('offsetWidth');
 
             // Determine if close to events
             var pixelWidth = timelineColumnWidth - timelineColumnPadding,//timelineColumn.get('offsetWidth') - timelineColumn.getStyle('paddingRight').replace('px', ''),
@@ -195,12 +195,6 @@ YUI.add('mojito-waterfall-summary-popup', function (Y, NAME) {
             return mouseX >= profileStartX - PROFILE_DISTANCE_THRESHOLD &&
                    mouseX <= profileEndX + PROFILE_DISTANCE_THRESHOLD;
         }
-
-        // Make timelineColumn properties invalid, so that the correct ones are used later.
-        Y.on('resize', function () {
-            timelineColumnWidth = null;
-            timelineColumnLeft = null;
-        });
 
         popup = new Y.mojito.Waterfall.Popup(waterfallTable, 'table > tbody > tr > td.timeline', function (e, row) {
             var closeEvents = getCloseEvents(e.pageX);

@@ -75,6 +75,7 @@
 .waterfall-table > tbody > tr > .timeline {
     width: 100%;
     padding: 0;
+    border-right: none;
     border-top: none; /* Instead the border is simulated using a div such that the border does not go over event lines */
 }
 
