@@ -15,15 +15,17 @@ YUI.add('mojito-waterfall-table', function (Y, NAME) {
         data = data || {};
         data.rows = data.rows || [];
 
-        var COLORS = ["#3C953C", "#4465A7", "#993399", "#D63333", "#FF6600", "#CCCC00", "#A1A1A1"],
-            EVENT_COLORS = ["#3355ff", "#ff3355", "#11cc22"],
+        var COLORS = ['#3C953C', '#4465A7', '#993399', '#D63333', '#FF6600', '#CCCC00', '#A1A1A1'],
+            EVENT_COLORS = ['#3355ff', '#ff3355', '#11cc22'],
             Time = Y.mojito.Waterfall.Time,
-            table = Y.Node.create("<table cellpadding='0' cellspacing='0'/>").addClass('waterfall-table'),
-            thead = Y.Node.create("<thead/>"),
-            tbody = Y.Node.create("<tbody/>"),
-            tfoot = Y.Node.create("<tfoot/>"),
+            tableContainer = Y.Node.create('<div/>'),
+            table = Y.Node.create('<table cellpadding="0" cellspacing="0"/>').addClass('waterfall-table'),
+            thead = Y.Node.create('<thead/>'),
+            tbody = Y.Node.create('<tbody/>'),
+            tfoot = Y.Node.create('<tfoot/>'),
             tr,
             td,
+            cell,
             units = data.units = data.units || 'ms',
             startTime = Number.MAX_VALUE,
             endTime = Number.MIN_VALUE,
@@ -35,27 +37,27 @@ YUI.add('mojito-waterfall-table', function (Y, NAME) {
             normalizeTimes,
             getAbsoluteTimes,
             sortData,
-            eventLineHeight = 22 * data.rows.length;
+            eventLineHeight = 25 * data.rows.length;
 
         // create header
         // add timeline to headers if not present
-        if (data.headers[data.headers.length - 1] !== "Timeline") {
-            data.headers.push("Timeline");
+        if (data.headers[data.headers.length - 1] !== 'Timeline') {
+            data.headers.push('Timeline');
         }
-        tr = Y.Node.create("<tr/>");
+        tr = Y.Node.create('<tr/>');
         Y.each(data.headers, function (header, col) {
-            var th = Y.Node.create("<th" + (header === "Timeline" ? " colspan='2' style='min-width:" + (data.timelineMinWidth || 0) + "'" : "") + "/>"),
+            var th = Y.Node.create('<th' + (header === 'Timeline' ? ' colspan="2" style="min-width:' + (data.timelineMinWidth || 0) + '"' : '') + '/>'),
                 sortable = !data.sortColumns || !data.sortColumns[header] || data.sortColumns[header].sortable,
-                headerTable = Y.Node.create("<table class='sort no-select'/>"),
-                headerRow = Y.Node.create("<tr/>"),
-                sortArrows = Y.Node.create("<td class='arrows'><div class='up'>\u25B2</div><div class='down'>\u25BC</div></td>");
+                headerTable = Y.Node.create('<table/>').addClass('sort no-select'),
+                headerRow = Y.Node.create('<tr/>'),
+                sortArrows = Y.Node.create('<td class="arrows"><div class="up">\u25B2</div><div class="down">\u25BC</div></td>');
 
-            headerTable.addClass(header === "Timeline" ? "asc" : "");
-            headerTable.addClass(sortable ? "" : "disabled");
+            headerTable.addClass(header === 'Timeline' ? 'asc' : '');
+            headerTable.addClass(sortable ? '' : 'disabled');
 
             sortHeaders.push(headerTable);
-            headerTable.on("click", function () {
-                var headerWasAsc = headerTable.hasClass("asc"),
+            headerTable.on('click', function () {
+                var headerWasAsc = headerTable.hasClass('asc'),
                     defaultSortFunction = function (a, b) {
                         return a === b ? 0 : a > b ? 1 : -1;
                     },
@@ -64,13 +66,13 @@ YUI.add('mojito-waterfall-table', function (Y, NAME) {
 
                 // reset all other columns
                 Y.each(sortHeaders, function (sortHeader) {
-                    sortHeader.removeClass("asc");
-                    sortHeader.removeClass("desc");
+                    sortHeader.removeClass('asc');
+                    sortHeader.removeClass('desc');
                 });
 
                 // sort this column
-                headerTable.addClass(headerWasAsc ? "desc" : "asc");
-                tbody.set("innerHTML", "");
+                headerTable.addClass(headerWasAsc ? 'desc' : 'asc');
+                tbody.set('innerHTML', '');
 
                 sortRowGroup = function (rowGroup, parent) {
                     rowGroup.sort(function (a, b) {
@@ -103,7 +105,7 @@ YUI.add('mojito-waterfall-table', function (Y, NAME) {
                 appendSortedRows(tableData);
             });
 
-            headerRow.append("<td>" + header + "</td>");
+            headerRow.append('<td>' + header + '</td>');
             headerRow.append(sortArrows);
             headerTable.append(headerRow);
             th.append(headerTable);
@@ -148,17 +150,17 @@ YUI.add('mojito-waterfall-table', function (Y, NAME) {
 
         // create body
         createRow = function (row, depth, isLastChild) {
-            var profile = Y.Node.create("<table class='gradient profile'/>"),
+            var profile = Y.Node.create('<table/>').addClass('gradient profile'),
                 profileDuration = 0,
-                profileDurationText = Y.Node.create("<span class='no-select light duration'></span>"),
-                profileDurationTextTd = Y.Node.create("<td/>"),
-                profileTr = Y.Node.create("<tr/>"),
+                profileDurationText = Y.Node.create('<span/>').addClass('no-select light duration'),
+                profileDurationTextTd = Y.Node.create('<td/>'),
+                profileTr = Y.Node.create('<tr/>'),
                 index = 0,
                 relativeTime = 0,
                 summary = {
-                    "startTime": row.startTime - startTime,
-                    "endTime": row.startTime - startTime,
-                    "durations": []
+                    'startTime': row.startTime - startTime,
+                    'endTime': row.startTime - startTime,
+                    'durations': []
                 },
                 tableDataRow = {
                     columns: {},
@@ -169,93 +171,96 @@ YUI.add('mojito-waterfall-table', function (Y, NAME) {
                 paddingRight = 50,
                 offset = depth * 12;
 
-            tr = Y.Node.create("<tr/>");
+            tr = Y.Node.create('<tr/>');
 
             Y.Array.each(data.headers, function (header, columnIndex) {
                 var toggleButton,
                     moved = false,
-                    td = Y.Node.create("<td class='no-select'/>");
+                    td = Y.Node.create('<td/>').addClass('no-select');
 
                 // Create simulated border
                 if (rowIndex !== 0) {
-                    td.append(Y.Node.create('<div/>').addClass('simulated-border'));
+                    td.append(Y.Node.create('<div/>').addClass('simulated-border').append('<div/>'));
                 }
 
-                if (header !== "Timeline") {
-                    // set an increasing offset as depth increases
-                    if (columnIndex === 0) {
-                        td.setStyle("paddingLeft", baseOffset + offset);
-                    }
+                if (header !== 'Timeline') {
+                    cell = Y.Node.create('<div/>').addClass('cell');
+                    cell.append(Y.Node.create('<div/>').addClass('text').set('text', unescape(row[header])));
+
                     // append toggle button if there are details
-                    if (columnIndex === 0 && row.details !== undefined) {
+                    if (columnIndex === 0) {
+                        if (row.details !== undefined) {
 
-                        toggleButton = Y.Node.create("<div class='toggle no-select'>&nbsp;</div>");
-                        tr.on('mousemove', function () {
-                            moved = true;
-                        });
-                        tr.on('mousedown', function () {
-                            moved = false;
-                        });
-                        tr.on('mouseup', function () {
-                            if (moved) {
-                                return;
-                            }
-
-                            // toggle the button
-                            tableDataRow.expanded = !tableDataRow.expanded;
-                            if (tableDataRow.expanded) {
-                                toggleButton.addClass("expanded");
-                            } else {
-                                toggleButton.removeClass("expanded");
-                            }
-
-                            var toggleDetails = function (detailsRow, hide) {
-                                var content,
-                                    showChild = detailsRow.expanded && !hide,
-                                    callback = function () {
-                                        // adjust height of event lines
-                                        tbody.all('tr:first-child > td.timeline > .event-line').setStyle('height', tbody.get('offsetHeight'));
-                                    };
-
-                                // hide/show children
-                                if (detailsRow.details && !Y.Lang.isArray(detailsRow.details)) {
-                                    content = detailsRow.details.one("div.detailsContainer");
-                                    if (!showChild && content.getStyle("height") !== "0px") {
-                                        content.setStyle("height", content.get("scrollHeight") + "px");
-                                    } else {
-                                        detailsRow.details.show();
-                                    }
-                                    content.transition({
-                                        easing: 'ease-out',
-                                        duration: 0.3,
-                                        height: showChild ? content.get("scrollHeight") + "px" : "0px"
-                                    }, function () {
-                                        // need to set height to auto in case content inside change size
-                                        if (showChild) {
-                                            content.setStyle("height", "auto");
-                                        }
-                                    });
-                                } else {
-
-                                    Y.each(detailsRow.details, function (childDetailRow) {
-                                        if (showChild) {
-                                            childDetailRow.dataRow.show({duration: 0.1});
-                                            callback();
-                                        } else {
-                                            childDetailRow.dataRow.hide({duration: 0.1}, callback);
-                                        }
-                                        toggleDetails(childDetailRow, hide);
-                                    });
+                            toggleButton = Y.Node.create('<div/>').addClass('toggle no-select');
+                            tr.on('mousemove', function () {
+                                moved = true;
+                            });
+                            tr.on('mousedown', function () {
+                                moved = false;
+                            });
+                            tr.on('mouseup', function () {
+                                if (moved) {
+                                    return;
                                 }
-                            };
 
-                            toggleDetails(tableDataRow, !tableDataRow.expanded);
-                        });
-                        td.append(toggleButton);
-                        td.append("<div style='padding-left: 11px'>" + unescape(row[header]) + "</div>");
+                                // toggle the button
+                                tableDataRow.expanded = !tableDataRow.expanded;
+                                if (tableDataRow.expanded) {
+                                    toggleButton.addClass('expanded');
+                                } else {
+                                    toggleButton.removeClass('expanded');
+                                }
+
+                                var toggleDetails = function (detailsRow, hide) {
+                                    var content,
+                                        showChild = detailsRow.expanded && !hide,
+                                        callback = function () {
+                                            // adjust height of event lines
+                                            tbody.all('tr:first-child > td.timeline .event-line').setStyle('height', tbody.get('offsetHeight'));
+                                        };
+
+                                    // hide/show children
+                                    if (detailsRow.details && !Y.Lang.isArray(detailsRow.details)) {
+                                        content = detailsRow.details.one('div.detailsContainer');
+                                        if (!showChild && content.getStyle('height') !== '0px') {
+                                            content.setStyle('height', content.get('scrollHeight') + 'px');
+                                        } else {
+                                            detailsRow.details.show();
+                                        }
+                                        content.transition({
+                                            easing: 'ease-out',
+                                            duration: 0.3,
+                                            height: showChild ? content.get('scrollHeight') + 'px' : '0px'
+                                        }, function () {
+                                            // need to set height to auto in case content inside change size
+                                            if (showChild) {
+                                                content.setStyle('height', 'auto');
+                                            }
+                                        });
+                                    } else {
+
+                                        Y.each(detailsRow.details, function (childDetailRow) {
+                                            if (showChild) {
+                                                childDetailRow.dataRow.show({duration: 0.1});
+                                                callback();
+                                            } else {
+                                                childDetailRow.dataRow.hide({duration: 0.1}, callback);
+                                            }
+                                            toggleDetails(childDetailRow, hide);
+                                        });
+                                    }
+                                };
+
+                                toggleDetails(tableDataRow, !tableDataRow.expanded);
+                            });
+                        }
+                        // set an increasing offset as depth increases
+                        cell.setStyle('paddingLeft', baseOffset + offset);
+                        cell.prepend(toggleButton);
+                        td.append(cell);
                     } else {
                         // append cell data
-                        td.append(unescape(row[header]));
+                        td.append(cell);
                     }
 
                     tr.append(td);
@@ -264,11 +269,13 @@ YUI.add('mojito-waterfall-table', function (Y, NAME) {
             });
 
             // timeline cell
-            td = Y.Node.create("<td class='no-select'/>").addClass('timeline');
+            td = Y.Node.create('<td/>').addClass('timeline no-select');
+
+            cell = Y.Node.create('<div/>').setStyle('position', 'relative');
 
             // Create simulated border
             if (rowIndex !== 0) {
-                td.append(Y.Node.create('<div/>').addClass('simulated-border'));
+                cell.append(Y.Node.create('<div/>').addClass('simulated-border').append('<div/>'));
             }
 
             // create event lines
@@ -277,7 +284,7 @@ YUI.add('mojito-waterfall-table', function (Y, NAME) {
                 Y.Array.each(data.events, function (event, eventIndex) {
                     var groups,
                         color = (event.color || EVENT_COLORS[eventIndex % EVENT_COLORS.length]),
-                        line = Y.Node.create("<div class='event-line no-select' style='border-right:1px solid " + color + "'/>")
+                        line = Y.Node.create('<div/>').addClass('event-line no-select').setStyle('borderRight', '1px solid ' + color)
                                      .setAttribute('name', 'event-line-' + eventIndex);
 
                     line.setStyle('height', eventLineHeight);
@@ -303,10 +310,10 @@ YUI.add('mojito-waterfall-table', function (Y, NAME) {
 
                     event.index = eventIndex;
                     event.color = color;
-                    line.setStyle("left", (100 * (event.time - startTime) / (endTime - startTime)) + "%");
+                    line.setStyle('left', (100 * (event.time - startTime) / (endTime - startTime)) + '%');
 
                     event.color = color;
-                    td.append(line);
+                    cell.append(line);
                 });
             }
 
@@ -318,9 +325,9 @@ YUI.add('mojito-waterfall-table', function (Y, NAME) {
             Y.each(row.durations, function (duration, i) {
                 var defaultColor = COLORS[index % COLORS.length],
                     color = duration.color || (data.colors ? data.colors[duration.type] || defaultColor : defaultColor),
-                    profileTd = Y.Node.create("<td class='gradient' style='background-color:" + color + "'/>");
+                    profileTd = Y.Node.create('<td/>').addClass('gradient').setStyle('backgroundColor', color);
 
-                profileTd.setStyle("width", (100 * duration.duration / profileDuration) + "%");
+                profileTd.setStyle('width', (100 * duration.duration / profileDuration) + '%');
 
                 // do not append timeslice if there is more than one and this one has duration of 0
                 if (duration.duration > 0 || row.durations.length === 1) {
@@ -330,10 +337,10 @@ YUI.add('mojito-waterfall-table', function (Y, NAME) {
 
                 summary.endTime += duration.duration;
                 summary.durations.push({
-                    "startTime": relativeTime,
-                    "duration": duration.duration,
-                    "color": color,
-                    "type": duration.type
+                    'startTime': relativeTime,
+                    'duration': duration.duration,
+                    'color': color,
+                    'type': duration.type
                 });
                 relativeTime += duration.duration;
 
@@ -347,21 +354,23 @@ YUI.add('mojito-waterfall-table', function (Y, NAME) {
             summaries.push(summary);
 
             // set profile width
-            profile.setStyle("width", (100 * profileDuration / (endTime - startTime)) + "%");
+            profile.setStyle('width', (100 * profileDuration / (endTime - startTime)) + '%');
 
-            profile.setStyle("left", ((100 * (row.startTime - startTime) / (endTime - startTime)) + "%"));
+            profile.setStyle('left', ((100 * (row.startTime - startTime) / (endTime - startTime)) + '%'));
             profileDurationText.append(Time.timeToString(profileDuration + units, 3));
 
             profile.append(profileTr);
 
-            td.append(profile);
+            cell.append(profile);
+
+            td.append(cell);
 
             tr.append(td);
 
             // Append last cell that serves as space for any profile time text.
-            td = Y.Node.create('<td/>');
+            td = Y.Node.create('<td/>').addClass('no-select');
             if (rowIndex !== 0) {
-                td.append(Y.Node.create('<div/>').addClass('simulated-border')); // Create simulated border
+                td.append(Y.Node.create('<div/>').addClass('simulated-border').append('<div/>')); // Create simulated border
             }
             tr.append(td);
 
@@ -370,7 +379,7 @@ YUI.add('mojito-waterfall-table', function (Y, NAME) {
             // hide rows that are not on the topmost level
             if (depth > 0) {
                 tr.hide();
-                tr.setStyle("opacity", 0);
+                tr.setStyle('opacity', 0);
             }
             tbody.append(tr);
             tableDataRow.dataRow = tr;
@@ -383,9 +392,9 @@ YUI.add('mojito-waterfall-table', function (Y, NAME) {
                         tableDataRow.details.push(createRow(childRow, depth + 1, childRowIndex === row.details.length));
                     });
                 } else {
-                    tr = Y.Node.create("<tr class='details'/>").hide();
-                    td = Y.Node.create("<td colspan='" + (data.headers.length + 2) + "'/>");
-                    td.append("<div class='detailsContainer' style='height: 0px; padding-left:" + (offset + 10) + "px'><div class='detailsWrapper'>" + unescape(row.details) + "</div></div>");
+                    tr = Y.Node.create('<tr/>').addClass('details').hide();
+                    td = Y.Node.create('<td/>').setAttribute('colspan', (data.headers.length + 2));
+                    td.append('<div class="detailsContainer" style="height: 0px; padding-left:' + (offset + 10) + 'px"><div class="detailsWrapper">' + unescape(row.details) + '</div></div>');
                     tr.append(td);
                     tbody.append(tr);
                     tableDataRow.details = tr;
@@ -404,13 +413,13 @@ YUI.add('mojito-waterfall-table', function (Y, NAME) {
 
         // create footer
         if (data.summary) {
-            tr = Y.Node.create("<tr/>");
+            tr = Y.Node.create('<tr/>');
             Y.Array.each(data.headers, function (header) {
-                td = Y.Node.create("<td/>");
+                td = Y.Node.create('<td/>');
                 if (header === 'Timeline') {
                     td.setAttribute('colspan', 2);
                 }
-                td.append(unescape(data.summary[header] || ""));
+                td.append(unescape(data.summary[header] || ''));
                 tr.append(td);
             });
             tfoot.append(tr);
@@ -422,10 +431,12 @@ YUI.add('mojito-waterfall-table', function (Y, NAME) {
             event.time = event.time - startTime;
         });
 
-        table.append(new Y.mojito.Waterfall.SummaryPopup(summaries, data.events, endTime - startTime, table, units));
-        table.append(new Y.mojito.Waterfall.Ruler(tbody, endTime - startTime, units));
+        tableContainer.append(table);
 
-        return table;
+        tableContainer.append(new Y.mojito.Waterfall.SummaryPopup(summaries, data.events, endTime - startTime, tableContainer, units));
+        tableContainer.append(new Y.mojito.Waterfall.Ruler(tbody, endTime - startTime, units));
+
+        return tableContainer;
     }
 
     Y.namespace('mojito.Waterfall').Table = WaterfallTable;

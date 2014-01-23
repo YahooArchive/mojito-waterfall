@@ -35,7 +35,8 @@ YUI.add('mojito-waterfall-summary-popup', function (Y, NAME) {
             table.append("<tr><td colspan='4' class='vertical-space'></td></tr>");
 
             closeEvents.sort(function (a, b) {
-                return a.event.time < b.event.time ? -1 : a.event.time > b.event.time ? 1 : 0;
+                return a.event.time < b.event.time ? -1 : a.event.time > b.event.time ? 1 :
+                        a.event.index < b.event.index ? -1 : 1; // if events have the same time, then sort by original index
             });
             Y.Array.each(closeEvents, function (closeEvent, i) {
                 if (!eventsSummaryNodes[closeEvent.num]) {
@@ -201,7 +202,7 @@ YUI.add('mojito-waterfall-summary-popup', function (Y, NAME) {
             timelineColumnLeft = null;
         });
 
-        popup = new Y.mojito.Waterfall.Popup(waterfallTable, '> tbody > tr > td.timeline', function (e, row) {
+        popup = new Y.mojito.Waterfall.Popup(waterfallTable, 'table > tbody > tr > td.timeline', function (e, row) {
             var closeEvents = getCloseEvents(e.pageX);
 
             if (closeEvents) {
@@ -220,7 +221,7 @@ YUI.add('mojito-waterfall-summary-popup', function (Y, NAME) {
 
             if (closeEvents) {
                 setEventsSummary(closeEvents);
-                if (!e.button) {
+                if (!popup.mousedown) {
                     popup.show();
                 }
                 isProfileSummary = false;

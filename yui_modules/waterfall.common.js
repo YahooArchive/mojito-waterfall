@@ -421,6 +421,12 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
 
             stats[statType] = stat;
         });
+
+        Y.Array.each(waterfall.events, function (event) {
+            minTime = Math.min(event.time, minTime) || minTime;
+            maxTime = Math.max(event.time, maxTime) || maxTime;
+        });
+
         stats.totalDuration = maxTime - minTime;
 
         return stats;
@@ -510,8 +516,7 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
                 rows: (waterfall1.rows && Y.clone(waterfall1.rows)) || [],
                 events: (waterfall1.events && Y.clone(waterfall1.events)) || [],
                 eventFilters: config.eventFilters,
-                absoluteStartTime: Math.min(waterfall1.absoluteStartTime,
-                    Time.convertTime(waterfall2.absoluteStartTime + waterfall2.units, waterfall1.units))
+                absoluteStartTime: waterfall1.absoluteStartTime || 0
             },
             shiftAndConvertTimes = function (rows) {
                 var rowsCopy = [];
@@ -521,6 +526,9 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
                         startTime: Time.convertTime(row.startTime + waterfall2.units, mergedWaterfall.units) + timeShift,
                         endTime: Time.convertTime(row.endTime + waterfall2.units, mergedWaterfall.units) + timeShift
                     };
+
+                    mergedWaterfall.absoluteStartTime = Math.min(rowCopy.startTime, mergedWaterfall.absoluteStartTime);
+
                     if (isNaN(rowCopy.startTime)) {
                         delete rowCopy.startTime;
                     }
@@ -557,6 +565,7 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
             var eventCopy = {};
             eventCopy.time = Time.convertTime(event.time + waterfall2.units, mergedWaterfall.units) + timeShift;
             Y.mix(eventCopy, event);
+            mergedWaterfall.absoluteStartTime = Math.min(eventCopy.time, mergedWaterfall.absoluteStartTime);
             mergedWaterfall.events.push(eventCopy);
         });
 

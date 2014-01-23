@@ -58,33 +58,31 @@
 
 .waterfall-table {
     border: 1px solid #ddd;
+    border-collapse: collapse;
 }
 
-.waterfall-table > tbody > tr > td {
+.waterfall-table > tbody > tr > td:not(last-child) {
     /*border-top: 1px solid #ddd;*/ /* Taken care of by simulated border */
     white-space: nowrap;
-    padding: 1px 8px 1px 4px;
-    height: 22px;
-    position: relative;
+    vertical-align: top;
+    border-right: 1px solid #ddd;
 }
 
 .stats.waterfall-table > tbody > tr > td {
     border-top: 1px solid #ddd;
 }
 
-
-.waterfall-table > tbody > tr > td:first-child {
-    width: 1px; /*TODO: force first column to smallest width*/
-}
-
 .waterfall-table > tbody > tr > .timeline {
     width: 100%;
     padding: 0;
-    vertical-align: bottom;
     border-top: none; /* Instead the border is simulated using a div such that the border does not go over event lines */
 }
 
 .waterfall-table > tbody > tr > td .simulated-border {
+    position: relative;
+}
+
+.waterfall-table > tbody > tr > td .simulated-border div {
     position: absolute;
     width: 100%;
     border-top: 1px solid #ddd;
@@ -101,8 +99,7 @@
 .waterfall-table .profile {
     float: left;
     border-collapse: collapse;
-    margin-top: 1px;
-    margin-bottom: 1px;
+    margin-top: 2px;
     position: relative;
 }
 
@@ -162,8 +159,9 @@
     color: #777;
 }
 
-.waterfall-table .toggle {
-    width: 9px;
+.waterfall-table .cell > .toggle {
+    width: 10px;
+    height: 12px;
     float: left;
     position: relative;
     top: 3px;
@@ -171,6 +169,14 @@
     cursor: pointer;
     margin-top: -1px;
     background: url('/static/Waterfall/assets/images/plus.png') no-repeat scroll 0 0 transparent;
+}
+
+.waterfall-table .cell {
+    padding: 5px 4px 5px 4px;
+}
+
+.waterfall-table .cell > .text {
+    line-height: 15px;
 }
 
 .waterfall-table .no-select {
@@ -199,6 +205,9 @@
 
 
 /* Stats Table */
+.stats.waterfall-table > tbody > tr > td {
+    padding: 3px 6px 3px 6px;
+}
 
 .stats.waterfall-table > tbody > tr > td:last-child {
     width: 100%;
@@ -217,7 +226,7 @@
 }
 
 .waterfall .event-filters .filter input {
-    margin-right: 3px;
+    margin: 0 3px 0 0;
 }
 
 .waterfall .event-filters .filter span.real {

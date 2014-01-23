@@ -98,7 +98,7 @@ YUI.add('mojito-waterfall-event-filters', function (Y, NAME) {
         highlightEvents: function (highlight) {
             Y.Array.each(this.events, function (event) {
                 if (event.enabled) {
-                    this.waterfallTable.all('tbody td > div[name="event-line-' + event.index + '"]')
+                    this.waterfallTable.all('tbody td.timeline  div.event-line[name="event-line-' + event.index + '"]')
                                        .setStyle('borderWidth', highlight ? '3px' : '1px')
                                        .setStyle('marginLeft', highlight ? '-1px' : '0px');
                 }

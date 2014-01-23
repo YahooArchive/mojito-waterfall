@@ -24,12 +24,13 @@ YUI.add('mojito-waterfall-popup', function (Y, NAME) {
 
         container.all(selector).each(function (node, i) {
             node.on('mouseover', function (e) {
-                if (!e.button) {
+                if (!self.mousedown) {
                     self.show();
                     self.update(e, i);
                     self.move(e, i);
                 }
             });
+
             node.on('mouseup', function () {
                 self.show();
             });
@@ -41,7 +42,15 @@ YUI.add('mojito-waterfall-popup', function (Y, NAME) {
             });
         });
 
-        container.append(popupNode, 'after');
+        Y.one('body').on('mousedown', function () {
+            self.mousedown = true;
+        });
+
+        Y.one('body').on('mouseup', function () {
+            self.mousedown = false;
+        });
+
+        container.append(popupNode);
     }
 
     Popup.prototype = {
@@ -73,10 +82,8 @@ YUI.add('mojito-waterfall-popup', function (Y, NAME) {
                 popupHeight = this.node.get("offsetHeight"),
                 spacing = 10;
 
-            this.node.setXY([
-                Math.min(mouseX + spacing, Math.max(leftLimit, rightLimit - popupWidth)),
-                Math.max(Math.min(mouseY + spacing, bottomLimit - popupHeight), topLimit)
-            ]);
+            this.node.setStyle('left', Math.min(mouseX + spacing, Math.max(leftLimit, rightLimit - popupWidth)));
+            this.node.setStyle('top', Math.max(Math.min(mouseY + spacing, bottomLimit - popupHeight), topLimit));
         }
     };
 
