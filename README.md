@@ -146,7 +146,7 @@ Event filters appear whenever the waterfall contains events. These filters allow
 ```
 waterfall.configure({
     eventFilters: {
-        Mojito: false // Events beloging to the group 'Mojito' will initially not be visible.
+        Client: false // Events beloging to the group 'Client' will initially not be visible.
     }
 });
 ```
