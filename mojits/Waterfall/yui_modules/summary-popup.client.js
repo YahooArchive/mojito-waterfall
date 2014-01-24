@@ -45,7 +45,7 @@ YUI.add('mojito-waterfall-summary-popup', function (Y, NAME) {
                         detailsTr;
                     eventTr.append("<td><div class='event-color' style='border-left: 2px solid " + event.color + "'/></td>");
                     eventTr.append("<td class='time'>" + Time.timeToString(event.time + units, 3) + "</td>");
-                    eventTr.append("<td class='type' colspan='2'>" + event.type + "</td>");
+                    eventTr.append("<td class='name' colspan='2'>" + event.name + "</td>");
 
                     if (event.details) {
                         detailsTr = Y.Node.create('<tr/>').append(event.details);
@@ -100,10 +100,10 @@ YUI.add('mojito-waterfall-summary-popup', function (Y, NAME) {
             // breakdowns
             Y.each(summaries[row].durations, function (duration) {
                 tr = Y.Node.create("<tr class='breakdown'></tr>");
-                tr.append("<td class='type-color gradient' style='background-color:" + duration.color + "'></td>");
+                tr.append("<td class='duration-color gradient' style='background-color:" + duration.color + "'></td>");
                 tr.append("<td class='time'>" + (duration.startTime > 0 ? "+" : "") + Time.timeToString(duration.startTime + units, 3) + "</td>");
                 tr.append("<td class='duration'>" + (duration.duration > 0 ? "+" : "") + Time.timeToString(duration.duration + units, 3) + "</td>");
-                tr.append("<td class='type'>" + duration.type + "</td>");
+                tr.append("<td class='name'>" + duration.name + "</td>");
                 table.append(tr);
             });
 
@@ -126,7 +126,7 @@ YUI.add('mojito-waterfall-summary-popup', function (Y, NAME) {
                     tr = Y.Node.create("<tr class='breakdown'></tr>");
                     tr.append("<td><div class='event-color' style='border-left: 2px solid " + event.color + "'/></td>");
                     tr.append("<td class='time'>" + (relativeTime > 0 ? "+" : "") + Time.timeToString(relativeTime + units, 3) + "</td>");
-                    tr.append("<td class='type' colspan='2'>" + event.type + "</td>");
+                    tr.append("<td class='name' colspan='2'>" + event.name + "</td>");
                     table.append(tr);
                 });
             }

@@ -18,7 +18,7 @@
     white-space: nowrap;
 }
 
-.waterfall-summary .breakdown .type-color {
+.waterfall-summary .breakdown .duration-color {
     padding-right: 5px;
 }
 
@@ -26,7 +26,7 @@
     height: 15px;
 }
 
-.waterfall-summary .breakdown .type {
+.waterfall-summary .breakdown .name {
     white-space: nowrap;
 }
 

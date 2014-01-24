@@ -292,7 +292,7 @@ YUI.add('mojito-waterfall-table', function (Y, NAME) {
                     // Determine whether this event is enabled
                     event.enabled = true;
                     if (Y.Lang.isObject(data.eventFilters)) {
-                        groups = event.group || event['class'] || event.type;
+                        groups = event.group || event['class'] || event.name;
                         groups = Y.Lang.isArray(groups) ? groups : [groups];
                         if (data.eventFilters['All Events'] === false) {
                             event.enabled = false;
@@ -324,7 +324,7 @@ YUI.add('mojito-waterfall-table', function (Y, NAME) {
 
             Y.each(row.durations, function (duration, i) {
                 var defaultColor = COLORS[index % COLORS.length],
-                    color = duration.color || (data.colors ? data.colors[duration.type] || defaultColor : defaultColor),
+                    color = duration.color || (data.colors ? data.colors[duration.name] || defaultColor : defaultColor),
                     profileTd = Y.Node.create('<td/>').addClass('gradient').setStyle('backgroundColor', color);
 
                 profileTd.setStyle('width', (100 * duration.duration / profileDuration) + '%');
@@ -337,10 +337,10 @@ YUI.add('mojito-waterfall-table', function (Y, NAME) {
 
                 summary.endTime += duration.duration;
                 summary.durations.push({
-                    'startTime': relativeTime,
-                    'duration': duration.duration,
-                    'color': color,
-                    'type': duration.type
+                    startTime: relativeTime,
+                    duration: duration.duration,
+                    color: color,
+                    name: duration.name
                 });
                 relativeTime += duration.duration;
 

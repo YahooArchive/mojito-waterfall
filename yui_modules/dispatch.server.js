@@ -61,10 +61,10 @@ YUI.add('mojito-waterfall-dispatcher', function (Y, NAME) {
             var my = this,
                 store = this.store,
                 id = command.instance.instanceId = command.instance.instanceId || Y.guid(),
-                type = command.instance.base || command.instance.type,
+                name = command.instance.base || command.instance.type,
                 done = adapter.done;
 
-            my.waterfall.start('/' + id, {type: type, level: 'mojit'});
+            my.waterfall.start('/' + id, {name: name, level: 'mojit'});
 
             adapter.done = function () {
                 my.waterfall.end('/' + id + '/Render');

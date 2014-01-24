@@ -19,4 +19,4 @@ exports.Waterfall = YUI({
             fullpath: path.join(__dirname, './yui_modules/time.common.js')
         }
     }
-}).use('waterfall').Waterfall;
+}).use('mojito-waterfall').mojito.Waterfall;
