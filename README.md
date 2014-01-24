@@ -13,7 +13,7 @@ The easiest way to use Waterfall is to simply install the [mojito-debug](https:/
 
 Alternatively, you may render a waterfall yourself using the Waterfall mojit (see [Waterfall Mojit](#waterfall-mojit)), by passing it a Waterfall GUI object. You can either manually create this object (see [Waterfall GUI Object](#waterfall-gui-object) or generate it using the Waterfall API (see [Waterfall API](#waterfall-api)).
 
-If you wish to use Waterfall without [mojito-debug](https://github.com/yahoo/mojito-debug#mojito-debug-), install using npm:
+To use Waterfall without [mojito-debug](https://github.com/yahoo/mojito-debug#mojito-debug-), install using npm:
 
         $ npm install mojito-waterfall
         
@@ -119,11 +119,9 @@ waterfall.resume();
 waterfall.clear();
 ```
 
----
+## Configuration
 
-### Configuration
-
-#### Headers
+### Headers
 The `headers` configuration options is an array of strings representing the different columns of the Waterfall. These headers appear in their given order in the head of the Waterfall table. When profile data is passed during instrumentation, fields that have a corresponding header are displayed under the corresponding column of the Waterfall table.
 
 **Example**
@@ -137,7 +135,7 @@ waterfall.start('Main Mojit', {
 });
 ```
 
-#### Event Filters
+### Event Filters
 
 Event filters appear whenever the waterfall contains events. These filters allow users to toggle the visibility of different groups of events (see [Profile Data](#profile-data) for how to specify which group(s) an event belongs to). The `eventsFilter` configuration option can be a boolean, defaulting to true, indicating whether the filters should appear. Alternatively, it can be an object that specifies specific filter groups that should be disabled by setting them to false.
 
@@ -153,8 +151,28 @@ waterfall.configure({
 
 [![Events](https://raw.github.com/yahoo/mojito-waterfall/master/images/events.png)](https://raw.github.com/yahoo/mojito-waterfall/master/images/events.png)
 
-#### Stats Filters
+#### Stats Filter
 
+Stats are automatically generated for all profile types; this can lead to a large amount of statistical data. In order to display only certain types of stats, use the stats configuration option. This option is an object that accepts two kinds of filters: `profileFilter` and `statsFilter`. These filters are boolean expressions that specify which profile should appear based on profile data and stat values.
 
+`profileFilter` is an expression containing fields that may appear in profile data. The example below indicates that only profiles with the name 'Mojito' or of type 'Mojit' should appear.
 
-###Profile Data
+```
+waterfall.configure({
+    stats: {
+        profileFilter: 'Name === "Mojito" || Type === "Mojit"'
+    }
+});
+```
+
+`statsFilter` is an expression containing fields of stats type (Calls, Total Duration, Avg Duration, Min Duration, Max Duration). The example below indicates that profiles with more than 10 calls and an avg duration greater than 3ms should appear. The time units refers to the units of the waterfall (ns in the server-side and ms in the client-side).
+
+```
+waterfall.configure({
+    stats: {
+        statsFilter: 'Calls > 10 && Avg Duration > 3e6'
+    }
+});
+```
+
+## Profile Data
