@@ -334,9 +334,9 @@ YUI.add('waterfall-tests', function (Y, NAME) {
                     }],
 
                     events: [{
-                        type: 'event1'
+                        name: 'event1'
                     }, {
-                        type: 'event2'
+                        name: 'event2'
                     }]
                 };
 
