@@ -18,7 +18,7 @@ YUI.add('mojito-waterfall-gui', function (Y, NAME) {
         container.append(waterfallTable);
 
         // Append events filters.
-        if (data.eventFilters && data.events && data.events.length > 0) {
+        if (data.eventFilters !== false && data.events && data.events.length > 0) {
             container.append('<br/>');
             container.append(new Y.mojito.Waterfall.EventFilters(data.events, waterfallTable, data.eventFilters));
         }
