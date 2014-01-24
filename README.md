@@ -189,13 +189,53 @@ The `color` option specifies what color the profile/event should be. This value 
 
 ### Class
 
-
+The [`class`](#class) option specifies what class(es) a profile/event belongs to. This value can be a string, represengin a single class, or an array of strings representing multiple classes. If no class is specified, the class is inferred as the [`group`](#group) specified, otherwise the profile's name. The class is used to merge pre-defined profile data objects into the profile's data (see [Classes](#classes)). The current profile data takes precendence, and if multiple classes are specified, classes appearing first take precedence over those appearing after. If the class object itself has classes, they get added to the profile's classes, and corresponding class object also get merged.
 
 ### Group
 
-The `group` option is only used to specify which group(s) an event belongs to. 
+The [`group`](#group) option is only used to specify which group(s) an event belongs to. This value can be a string, representing a single group, or an array of string, representing multiple groups. The group is used by the [event filters](#event-filter) in order toggle groups of events. If no group is specified, the group is inferred as the [`class`](#class) specified, otherwise the event's name.
 
 ## Profile Path
+
+Waterfall can handle all kinds of instrumentaiton scenarios involving overlapping profiles, profiles with the same name, and profiles within profiles. The resuling waterfall can have profiles with multiple deeply nested children profiles. Profile paths allow users to specify where exactly the profile should appear.
+
+The simplest path is a relative path that just involves the profile name. This results in a profile that belong to closest profile that is still open. In the example below, profile 'b' ends up being a child of profile 'a'.
+
+```
+waterfall.start('a');
+waterfall.start('b');
+waterfall.end('b');
+waterfall.end('a');
+```
+
+More complex relative paths use '/' to indicate a deeply nested child profile starting from the closest profile that is still open. In the example below, profile 'c' is nested within 'b' which ends up being a child of 'a'.
+
+```
+waterfall.start('a');
+waterfall.start('b/c');
+waterfall.end('b/c');
+waterfall.end('a');
+```
+
+Finally a path can be absolute by starting with a '/'. This forces the profile to appear at the root regardless of any other open profile. In the example below, profile 'b' does not become a child of 'a'.
+
+```
+waterfall.start('a');
+waterfall.start('/b');
+waterfall.end('/b);
+waterfall.end('a');
+```
+
+### Profile Duration
+
+A profile can be subdivided into durations. Durations appear as different colors within the profile and their details can be seen while mousing over the profile. A duration is specified by appending ':' followed by the duration name after a profile path. In the example below, profile 'a' is subdivided into two durations, 'x', and 'y'.
+
+```
+waterfall.start('a:x');
+waterfall.end('a:x');
+waterfall.start('a:y');
+waterfall.end('a:y');
+```
 
 ## Waterfall GUI Object
 
