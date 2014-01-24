@@ -135,6 +135,10 @@ waterfall.start('Main Mojit', {
 });
 ```
 
+### Classes
+
+(see the profile data [class](#class] field).
+
 ### Event Filters
 
 Event filters appear whenever the waterfall contains events. These filters allow users to toggle the visibility of different groups of events (see [Profile Data](#profile-data) for how to specify which group(s) an event belongs to). The `eventsFilter` configuration option can be a boolean, defaulting to true, indicating whether the filters should appear. Alternatively, it can be an object that specifies specific filter groups that should be disabled by setting them to false.
@@ -176,3 +180,23 @@ waterfall.configure({
 ```
 
 ## Profile Data
+
+Instrumentation calls ([`start`](#start), [`end`](#end), [`event`](#event)) accept profile data as an optional second argument. This object is primarily used to specify the profile's column value, but can also accept any field that might be useful when specifying a profileFilter (see [Stats Filter](#stats-filters)). Special fields include [`color`](#color), [`class`](#class), and [`group`](#group).
+
+### Color
+
+The `color` option specifies what color the profile/event should be. This value is a string representing a css color value.
+
+### Class
+
+
+
+### Group
+
+The `group` option is only used to specify which group(s) an event belongs to. 
+
+## Profile Path
+
+## Waterfall GUI Object
+
+
