@@ -121,7 +121,7 @@ waterfall.clear();
 
 ## Configuration
 
-### Headers
+#### Headers
 The `headers` configuration options is an array of strings representing the different columns of the Waterfall. These headers appear in their given order in the head of the Waterfall table. When profile data is passed during instrumentation, fields that have a corresponding header are displayed under the corresponding column of the Waterfall table.
 
 **Example**
@@ -135,11 +135,23 @@ waterfall.start('Main Mojit', {
 });
 ```
 
-### Classes
+#### Classes
 
-(see the profile data [class](#class] field).
+The `classes` configuration option is an object whose keys represent [`class`](#class) values and values represent profile data that gets merged with other profile data that belong to profiles with the same corresponding class.
 
-### Event Filters
+**Example**
+
+```
+waterfall.configure({
+    classes: {
+        error: {
+            color: 'red'
+        }
+    }
+});
+```
+
+#### Event Filters
 
 Event filters appear whenever the waterfall contains events. These filters allow users to toggle the visibility of different groups of events (see [Profile Data](#profile-data) for how to specify which group(s) an event belongs to). The `eventsFilter` configuration option can be a boolean, defaulting to true, indicating whether the filters should appear. Alternatively, it can be an object that specifies specific filter groups that should be disabled by setting them to false.
 
@@ -183,17 +195,17 @@ waterfall.configure({
 
 Instrumentation calls ([`start`](#start), [`end`](#end), [`event`](#event)) accept profile data as an optional second argument. This object is primarily used to specify the profile's column value, but can also accept any field that might be useful when specifying a profileFilter (see [Stats Filter](#stats-filters)). Special fields include [`color`](#color), [`class`](#class), and [`group`](#group).
 
-### Color
+#### Color
 
 The `color` option specifies what color the profile/event should be. This value is a string representing a css color value.
 
-### Class
+#### Class
 
-The [`class`](#class) option specifies what class(es) a profile/event belongs to. This value can be a string, represengin a single class, or an array of strings representing multiple classes. If no class is specified, the class is inferred as the [`group`](#group) specified, otherwise the profile's name. The class is used to merge pre-defined profile data objects into the profile's data (see [Classes](#classes)). The current profile data takes precendence, and if multiple classes are specified, classes appearing first take precedence over those appearing after. If the class object itself has classes, they get added to the profile's classes, and corresponding class object also get merged.
+The [`class`](#class) option specifies what class(es) a profile/event belongs to. This value can be a string, represengin a single class, or an array of strings representing multiple classes. If no class is specified, the class is inferred as the profile's name. The class is used to merge pre-defined profile data objects into the profile's data (see [Classes](#classes)). The current profile data takes precendence, and if multiple classes are specified, classes appearing first take precedence over those appearing after. If the class object itself has classes, they get added to the profile's classes, and corresponding class object also get merged.
 
-### Group
+#### Group
 
-The [`group`](#group) option is only used to specify which group(s) an event belongs to. This value can be a string, representing a single group, or an array of string, representing multiple groups. The group is used by the [event filters](#event-filter) in order toggle groups of events. If no group is specified, the group is inferred as the [`class`](#class) specified, otherwise the event's name.
+The [`group`](#group) option is only used to specify which group(s) an event belongs to. This value can be a string, representing a single group, or an array of string, representing multiple groups. The group is used by the [event filters](#event-filter) in order toggle groups of events. If no group is specified, the group is inferred as the event's name.
 
 ## Profile Path
 
@@ -226,7 +238,7 @@ waterfall.end('/b);
 waterfall.end('a');
 ```
 
-### Profile Duration
+#### Profile Duration
 
 A profile can be subdivided into durations. Durations appear as different colors within the profile and their details can be seen while mousing over the profile. A duration is specified by appending ':' followed by the duration name after a profile path. In the example below, profile 'a' is subdivided into two durations, 'x', and 'y'.
 
@@ -237,6 +249,96 @@ waterfall.start('a:y');
 waterfall.end('a:y');
 ```
 
+## Waterfall Mojit
+
+The Waterfall mojit takes a [Waterfall GUI object](#waterfall-gui-object) and renders the waterfall using its binder. Pass the Waterfall GUI object through params > data > waterfall. If a Waterfall instance is used, make sure to pass the object returned by waterfall.getGui. In the example below, the Waterfall mojit is executed using ac.composite.
+
+```
+ac.composite.execute({
+    waterfall: {
+        params:
+            data:
+                waterfall: waterfall.getGui()
+            }
+        }
+    }
+}, function (data, meta) {
+    ac.done(data, meta);
+})
+```
+
 ## Waterfall GUI Object
 
+The Waterfall visualization is represented by an object that describes the columns, profile rows, events, and stats. The 'mojito-waterfall-gui' YUI module uses this object to render the visualization. It is most easily created by using [waterfall.getGui](#watefall.getGui), but can also be created manually. The object accepts the fields [`units`](#units), [`headers`](#headers), [`rows`](#rows), [`events`](#events), and [`stats`](#stats):
 
+#### Units
+
+All time values in the Waterfall GUI object must be integers, and so specifying a unit is important. The acceptible units are `ps`, `ns`, `us`, `ms`, `s`, `min`, and `h`. By default `ms` is assumed.
+
+#### Headers
+
+The [`headers`](#headers) option is an array of strings representing the columns of the waterfall.
+
+#### Rows
+
+The [`rows`](#rows) option is an array of row objects representing the root rows of the waterfall. Each row object contain the values for the columns specified, and a required array of `durations`.
+
+**Durations**
+The `durations` array must have a least one duration object which represents a colored profile time width. Each duration object must have a `startTime`, a `duration` time, and a `name`. It may also have a `color`; if no color is specified, then one is assigned.
+
+**Details**
+
+Each row may have a `details` field, which can be an array of rows, thereby creating a tree of rows whose children become visible whenever the parent row is expanded. `details` can also be an html string which is displayed when the row is expanded.
+
+#### Events
+
+The `events` option is an array of events. Each event is an object that must have a `time` and a `name`. It may also have a `color`; if no color is specified, then one is assigned.
+
+#### Stats
+
+The `stats` options is a array of stats. Each stat is an object representing a row in the stats table. Each object should specify a set of keys that represent the column and whose values represents the row value. It can also have a `summary` field which renders as a popup table when the mouse hovers over the stat row. This field is an array of summary objects, which just like the stats object, contain a set of keys/values used to populate the table.
+
+#### Example
+
+```
+{
+    headers: ['Name', 'Type`],
+    units: 'ms',
+    rows: [{
+        Name: 'Main',
+        Type: 'Mojit',
+        durations: [{
+            startTime: 0,
+            duration: 100,
+            name: 'Elapsed Time',
+            color: 'green'
+        }],
+        details: [{
+            Name: 'Controller',
+            durations: [{
+                startTime: 10,
+                duration: 30,
+                name: 'Elapsed Time',
+                color: '#1133CC'
+            }]
+        }]
+    }],
+    events: [{
+        name: 'Render Start',
+        time: 85,
+        color: 'rgb(220, 30, 40)'
+    }],
+    stats: [{
+        "Name": "dispatch",
+        "Calls": 36,
+        "Total Duration": "45.97ms",
+        "Avg Duration": "1.277ms",
+        "Min Duration": "255.7µs (SearchResultCollection)",
+        "Max Duration": "23.57ms (UniversalHeader)",
+        "summary": [{
+            "Name": "UniversalHeader",
+            "Duration": "23.57ms"
+        }]
+    }]
+}
+```
