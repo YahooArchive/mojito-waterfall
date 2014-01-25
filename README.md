@@ -196,19 +196,19 @@ waterfall.configure({
 
 ## Profile Data
 
-Instrumentation calls ([`start`](#start), [`end`](#end), [`event`](#event)) accept profile data as an optional second argument. This object is primarily used to specify the profile's column value, but can also accept any field that might be useful when specifying a profileFilter (see [Stats Filter](#stats-filters)). Special fields include [`color`](#color), [`class`](#class), and [`group`](#group).
+Instrumentation calls ([`start`](#start), [`end`](#end), [`event`](#event)) accept profile data as an optional second argument. This object is primarily used to specify the profile's column value, but can also accept any field that might be useful when specifying a profileFilter (see [Stats Filters](#stats-filters)). Special fields include [`color`](#color), [`class`](#class), and [`group`](#group).
 
 #### Color
 
-The `color` option specifies what color the profile/event should be. This value is a string representing a css color value.
+The [`color`](#color) option specifies what color the profile/event should be. This value is a string representing a css color value.
 
 #### Class
 
-The [`class`](#class) option specifies what class(es) a profile/event belongs to. This value can be a string, representing a single class, or an array of strings representing multiple classes. If no class is specified, the class is inferred as the profile's name. The class is used to merge pre-defined profile data objects into the profile's data (see [Classes](#classes)). The current profile data takes precedence, and if multiple classes are specified, classes appearing first take precedence over those appearing after. If the class object itself has classes, they get added to the profile's classes, and corresponding class object also get merged.
+The [`class`](#class) option specifies what class(es) a profile/event belongs to. This value can be a string, representing a single class, or an array of strings representing multiple classes. If no class is specified, the class is inferred as the profile's name. The class is used to merge pre-defined profile data objects into the profile's data (see [Classes](#classes)). The current profile data takes precedence, and if multiple classes are specified, classes appearing first take precedence over those appearing after. If the class' profile data object itself has classes, they get added to the profile's classes, and corresponding class object also get merged.
 
 #### Group
 
-The [`group`](#group) option is only used to specify which group(s) an event belongs to. This value can be a string, representing a single group, or an array of string, representing multiple groups. The group is used by the [event filters](#event-filter) in order toggle groups of events. If no group is specified, the group is inferred as the event's name.
+The [`group`](#group) option is only used to specify which group(s) an event belongs to. This value can be a string, representing a single group, or an array of string, representing multiple groups. The group is used by the [event filters](#event-filters) in order to toggle groups of events. If no group is specified, the group is inferred as the event's name.
 
 ## Profile Path
 
@@ -243,7 +243,7 @@ waterfall.end('a');
 
 #### Profile Duration
 
-A profile can be subdivided into durations. Durations appear as different colors within the profile and their details can be seen while mousing over the profile. A duration is specified by appending ':' followed by the duration name after a profile path. In the example below, profile 'a' is subdivided into two durations, 'x', and 'y'.
+A profile can be subdivided into durations. Durations appear as different colors within the profile and their details can be seen while mousing over the profile. A duration is specified by appending ':' followed by the duration name to the profile path. In the example below, profile 'a' is subdivided into two durations, 'x', and 'y'.
 
 ```
 waterfall.start('a:x');
@@ -254,13 +254,13 @@ waterfall.end('a:y');
 
 ## Waterfall Mojit
 
-The Waterfall mojit takes a [Waterfall GUI object](#waterfall-gui-object) and renders the waterfall using its binder. Pass the Waterfall GUI object through params > data > waterfall. If a Waterfall instance is used, make sure to pass the object returned by waterfall.getGui. In the example below, the Waterfall mojit is executed using ac.composite.
+The Waterfall mojit takes a [Waterfall GUI object](#waterfall-gui-object) and renders the waterfall using its binder. Pass the Waterfall GUI object through params > body > waterfall. If a Waterfall instance is used, make sure to pass the object returned by waterfall.getGui. In the example below, the Waterfall mojit is executed using ac.composite.
 
 ```
 ac.composite.execute({
     waterfall: {
         params:
-            data:
+            body:
                 waterfall: waterfall.getGui()
             }
         }
@@ -272,34 +272,7 @@ ac.composite.execute({
 
 ## Waterfall GUI Object
 
-The Waterfall visualization is represented by an object that describes the columns, profile rows, events, and stats. The 'mojito-waterfall-gui' YUI module uses this object to render the visualization. It is most easily created by using [waterfall.getGui](#watefall.getGui), but can also be created manually. The object accepts the fields [`units`](#units), [`headers`](#headers), [`rows`](#rows), [`events`](#events), and [`stats`](#stats):
-
-#### Units
-
-All time values in the Waterfall GUI object must be integers, and so specifying a unit is important. The acceptable units are `ps`, `ns`, `us`, `ms`, `s`, `min`, and `h`. By default `ms` is assumed.
-
-#### Headers
-
-The [`headers`](#headers) option is an array of strings representing the columns of the waterfall.
-
-#### Rows
-
-The [`rows`](#rows) option is an array of row objects representing the root rows of the waterfall. Each row object contain the values for the columns specified, and a required array of `durations`.
-
-**Durations**
-The `durations` array must have a least one duration object which represents a colored profile time width. Each duration object must have a `startTime`, a `duration` time, and a `name`. It may also have a `color`; if no color is specified, then one is assigned.
-
-**Details**
-
-Each row may have a `details` field, which can be an array of rows, thereby creating a tree of rows whose children become visible whenever the parent row is expanded. `details` can also be an html string which is displayed when the row is expanded.
-
-#### Events
-
-The `events` option is an array of events. Each event is an object that must have a `time` and a `name`. It may also have a `color`; if no color is specified, then one is assigned.
-
-#### Stats
-
-The `stats` options is a array of stats. Each stat is an object representing a row in the stats table. Each object should specify a set of keys that represent the column and whose values represent the row value. It can also have a `summary` field, which renders as a popup table when the mouse hovers over the stat row. This field is an array of summary objects, which, just like the stats object, contain a set of keys/values used to populate the table.
+The Waterfall visualization is represented by an object that describes the columns, profile rows, events, and stats. The 'mojito-waterfall-gui' YUI module uses this object to render the visualization. It is most easily created by using [waterfall.getGui](#getGui), but can also be created manually. The object accepts the fields [`units`](#units), [`headers`](#headers), [`rows`](#rows), [`events`](#events), and [`stats`](#stats):
 
 #### Example
 
@@ -336,12 +309,40 @@ The `stats` options is a array of stats. Each stat is an object representing a r
         "Calls": 36,
         "Total Duration": "45.97ms",
         "Avg Duration": "1.277ms",
-        "Min Duration": "255.7µs (SearchResultCollection)",
-        "Max Duration": "23.57ms (UniversalHeader)",
+        "Min Duration": "255.7µs (Child)",
+        "Max Duration": "23.57ms (Main)",
         "summary": [{
-            "Name": "UniversalHeader",
+            "Name": "Main",
             "Duration": "23.57ms"
         }]
     }]
 }
 ```
+
+#### Units
+
+All time values in the Waterfall GUI object must be integers, and so specifying a unit is important. The acceptable units are `ps`, `ns`, `us`, `ms`, `s`, `min`, and `h`. By default `ms` is assumed.
+
+#### Headers
+
+The [`headers`](#headers) option is an array of strings representing the columns of the waterfall.
+
+#### Rows
+
+The [`rows`](#rows) option is an array of row objects representing the root rows of the waterfall. Each row object contain the values for the columns specified, and a required array of `durations`.
+
+**Durations**
+
+The `durations` array must have a least one duration object which represents a colored profile time width. Each duration object must have a `startTime`, a `duration` time, and a `name`. It may also have a `color`; if no color is specified, then one is assigned.
+
+**Details**
+
+Each row may have a `details` field, which can be an array of rows, thereby creating a tree of rows whose children become visible whenever the parent row is expanded. `details` can also be an html string which is displayed when the row is expanded.
+
+#### Events
+
+The `events` option is an array of events. Each event is an object that must have a `time` and a `name`. It may also have a `color`; if no color is specified, then one is assigned.
+
+#### Stats
+
+The `stats` options is a array of stats. Each stat is an object representing a row in the stats table. Each object should specify a set of keys that represent the column and whose values represent the row value. It can also have a `summary` field, which renders as a popup table when the mouse hovers over the stat row. This field is an array of summary objects, which, just like the stats object, contain a set of keys/values used to populate the table.
