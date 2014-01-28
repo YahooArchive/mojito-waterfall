@@ -14,7 +14,8 @@ YUI.add('mojito-waterfall-ruler', function (Y, NAME) {
         var self = this,
             ruler = Y.Node.create('<div/>').addClass('waterfall-ruler no-select').hide(),
             length = Y.Node.create('<div/>').addClass('light length no-select'),
-            timelineColumn = tbody.one('> tr > td.timeline');
+            timelineColumn = tbody.one('> tr > td.timeline .timeline-length'),
+            timelineColumnWidth;
 
         ruler.append(Y.Node.create('<div/>').addClass('top lines no-select'));
         ruler.append(Y.Node.create('<div/>').addClass('bottom lines no-select'));
@@ -22,13 +23,14 @@ YUI.add('mojito-waterfall-ruler', function (Y, NAME) {
 
         tbody.on('mousedown', function (e) {
             if (e.button === 1) {
+                timelineColumnWidth = timelineColumn.get('offsetWidth');
                 self.start(e.pageX, e.pageY);
             }
         });
 
         tbody.on('mousemove', function (e) {
             if (self.isEnabled()) {
-                self.update(e.pageX, e.pageY, timelineColumn.get('offsetWidth'), timeLineDuration);
+                self.update(e.pageX, e.pageY, timelineColumnWidth, timeLineDuration);
             }
         });
 
@@ -75,7 +77,6 @@ YUI.add('mojito-waterfall-ruler', function (Y, NAME) {
             // update time length
             time = (Math.abs(this.startX - mouseX) / timeLineWidthPx) * timeLineDuration;
             this._length.set('text', Y.mojito.Waterfall.Time.timeToString(time + this.units, 3));
-            this._length.setStyle('marginLeft', -1 * this._length.getStyle('width').replace('px', '') / 2);
         },
 
         end: function () {

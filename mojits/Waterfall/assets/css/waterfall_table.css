@@ -79,6 +79,14 @@
     border-top: none; /* Instead the border is simulated using a div such that the border does not go over event lines */
 }
 
+.waterfall-table > tbody > tr > .timeline > .timeline-cell {
+    margin-right: 50px;
+}
+
+.waterfall-table > tbody > tr > .timeline .timeline-length {
+    position: relative;
+}
+
 .waterfall-table > tbody > tr > td .simulated-border {
     position: relative;
 }
@@ -89,12 +97,6 @@
     border-top: 1px solid #ddd;
     top: 0;
     left: 0;
-}
-
-.waterfall-table > tbody > tr > td:last-child {
-   width: 5px; /* Space on the right of the table for any profile time text */
-   padding: 0;
-   margin: 0;
 }
 
 .waterfall-table .profile {
@@ -163,7 +165,6 @@
 .waterfall-table .cell > .toggle {
     width: 10px;
     height: 12px;
-    float: left;
     position: relative;
     top: 3px;
     margin-right: 2px;
@@ -178,6 +179,10 @@
 
 .waterfall-table .cell > .text {
     line-height: 15px;
+}
+
+.waterfall-table .cell > div {
+    display: inline-block;
 }
 
 .waterfall-table .no-select {

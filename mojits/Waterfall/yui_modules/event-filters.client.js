@@ -89,7 +89,7 @@ YUI.add('mojito-waterfall-event-filters', function (Y, NAME) {
                     // Update the event on the waterfall.
                     if (event.enabled !== this.enabled) {
                         event.enabled = this.enabled;
-                        this.waterfallTable.all('tbody td > div[name="event-line-' + event.index + '"]')[event.enabled ? 'show' : 'hide']();
+                        this.waterfallTable.all('tbody td.timeline div[name="event-line-' + event.index + '"]')[event.enabled ? 'show' : 'hide']();
                     }
                 }.bind(this));
             }
