@@ -504,6 +504,7 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
         waterfall2 = (waterfall2.getGui && waterfall2.getGui()) || waterfall2;
 
         waterfall1.units = waterfall1.units || 'ms';
+        waterfall1.absoluteStartTime = waterfall1.absoluteStartTime || 0;
         waterfall2.units = waterfall2.units || 'ms';
 
         // Merge configs, with specified config taking precedence.
@@ -516,7 +517,7 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
                 rows: (waterfall1.rows && Y.clone(waterfall1.rows)) || [],
                 events: (waterfall1.events && Y.clone(waterfall1.events)) || [],
                 eventFilters: config.eventFilters,
-                absoluteStartTime: waterfall1.absoluteStartTime || 0
+                absoluteStartTime: waterfall1.absoluteStartTime
             },
             shiftAndConvertTimes = function (rows) {
                 var rowsCopy = [];
@@ -526,8 +527,6 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
                         startTime: Time.convertTime(row.startTime + waterfall2.units, mergedWaterfall.units) + timeShift,
                         endTime: Time.convertTime(row.endTime + waterfall2.units, mergedWaterfall.units) + timeShift
                     };
-
-                    mergedWaterfall.absoluteStartTime = Math.min(rowCopy.startTime, mergedWaterfall.absoluteStartTime);
 
                     if (isNaN(rowCopy.startTime)) {
                         delete rowCopy.startTime;
@@ -565,7 +564,6 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
             var eventCopy = {};
             eventCopy.time = Time.convertTime(event.time + waterfall2.units, mergedWaterfall.units) + timeShift;
             Y.mix(eventCopy, event);
-            mergedWaterfall.absoluteStartTime = Math.min(eventCopy.time, mergedWaterfall.absoluteStartTime);
             mergedWaterfall.events.push(eventCopy);
         });
 

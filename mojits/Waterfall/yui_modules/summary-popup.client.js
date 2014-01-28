@@ -11,7 +11,7 @@ YUI.add('mojito-waterfall-summary-popup', function (Y, NAME) {
 
     var Time = Y.mojito.Waterfall.Time;
 
-    function SummaryPopup(summaries, events, timeWidth, waterfallTable, units) {
+    function SummaryPopup(summaries, events, absoluteStartTime, timeWidth, waterfallTable, units) {
         var START_TIME_DESCRIPTION = "Start time since the beginning",
             PHASES_DESCRIPTION = "Phases start and elapsed time relative to the start:",
             EVENTS_DESCRIPTION = "Event timing relative to the start:",
@@ -20,7 +20,7 @@ YUI.add('mojito-waterfall-summary-popup', function (Y, NAME) {
             profileSummaryNodes = [],
             eventsSummaryNodes = [],
             isProfileSummary = false,
-            timelineColumn = waterfallTable.one('tbody > tr > td.timeline'),
+            timelineColumn = waterfallTable.one('tbody > tr > td.timeline .timeline-length'),
             timelineColumnPadding = timelineColumn.getStyle('paddingRight').replace('px', ''),
             timelineColumnWidth,
             timelineColumnLeft,
@@ -44,7 +44,7 @@ YUI.add('mojito-waterfall-summary-popup', function (Y, NAME) {
                         eventTr = Y.Node.create("<tr class='breakdown'></tr>"),
                         detailsTr;
                     eventTr.append("<td><div class='event-color' style='border-left: 2px solid " + event.color + "'/></td>");
-                    eventTr.append("<td class='time'>" + Time.timeToString(event.time + units, 3) + "</td>");
+                    eventTr.append("<td class='time'>" + Time.timeToString((event.time - absoluteStartTime) + units, 3) + "</td>");
                     eventTr.append("<td class='name' colspan='2'>" + event.name + "</td>");
 
                     if (event.details) {
@@ -152,7 +152,7 @@ YUI.add('mojito-waterfall-summary-popup', function (Y, NAME) {
                 if (!event.enabled) {
                     return;
                 }
-                var eventPercentX = event.time / timeWidth,
+                var eventPercentX = (event.time - absoluteStartTime) / timeWidth,
                     mousePercentX = (mouseX - left) / pixelWidth,
                     percentXDiff = Math.abs(eventPercentX - mousePercentX),
                     pixelXDiff = percentXDiff * pixelWidth;

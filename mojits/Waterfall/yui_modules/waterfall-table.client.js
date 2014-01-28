@@ -160,7 +160,6 @@ YUI.add('mojito-waterfall-table', function (Y, NAME) {
                 relativeTime = 0,
                 summary = {
                     'startTime': row.startTime - startTime,
-                    'endTime': row.startTime - startTime,
                     'durations': []
                 },
                 tableDataRow = {
@@ -272,11 +271,11 @@ YUI.add('mojito-waterfall-table', function (Y, NAME) {
             // timeline cell
             td = Y.Node.create('<td/>').addClass('timeline no-select');
 
-            cell = Y.Node.create('<div/>').setStyle('position', 'relative');
+            cell = Y.Node.create('<div/>').addClass('timeline-length');
 
             // Create simulated border
             if (rowIndex !== 0) {
-                cell.append(Y.Node.create('<div/>').addClass('simulated-border').append('<div/>'));
+                td.append(Y.Node.create('<div/>').addClass('simulated-border').append('<div/>'));
             }
 
             // create event lines
@@ -316,6 +315,14 @@ YUI.add('mojito-waterfall-table', function (Y, NAME) {
                     event.color = color;
                     cell.append(line);
                 });
+
+                // Sort events by start time
+                if (data.events) {
+                    data.events.sort(function (a, b) {
+                        return a.time > b.time ? 1 : a.time < b.time ? -1 :
+                                a.index < b.index ? -1 : 1; // if events have the same time, then sort by original index;
+                    });
+                }
             }
 
             // create time slice
@@ -364,15 +371,10 @@ YUI.add('mojito-waterfall-table', function (Y, NAME) {
 
             cell.append(profile);
 
+            cell = Y.Node.create('<div/>').addClass('timeline-cell').append(cell);
+
             td.append(cell);
 
-            tr.append(td);
-
-            // Append last cell that serves as space for any profile time text.
-            td = Y.Node.create('<td/>').addClass('no-select');
-            if (rowIndex !== 0) {
-                td.append(Y.Node.create('<div/>').addClass('simulated-border').append('<div/>')); // Create simulated border
-            }
             tr.append(td);
 
             tableDataRow.columns.Timeline = row.startTime;
@@ -427,14 +429,9 @@ YUI.add('mojito-waterfall-table', function (Y, NAME) {
             table.append(tfoot);
         }
 
-        // make events relative to start
-        Y.each(data.events, function (event) {
-            event.time = event.time - startTime;
-        });
-
         tableContainer.append(table);
 
-        tableContainer.append(new Y.mojito.Waterfall.SummaryPopup(summaries, data.events, endTime - startTime, tableContainer, units));
+        tableContainer.append(new Y.mojito.Waterfall.SummaryPopup(summaries, data.events, startTime, endTime - startTime, tableContainer, units));
         tableContainer.append(new Y.mojito.Waterfall.Ruler(tbody, endTime - startTime, units));
 
         return tableContainer;
