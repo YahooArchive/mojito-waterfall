@@ -13,6 +13,7 @@ YUI.add('mojito-waterfall-table', function (Y, NAME) {
     function WaterfallTable(data) {
 
         data = data || {};
+        data.headers = data.headers || [];
         data.rows = data.rows || [];
 
         var COLORS = ['#3C953C', '#4465A7', '#993399', '#D63333', '#FF6600', '#CCCC00', '#A1A1A1'],

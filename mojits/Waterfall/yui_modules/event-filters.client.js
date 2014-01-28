@@ -138,9 +138,9 @@ YUI.add('mojito-waterfall-event-filters', function (Y, NAME) {
 
         // Determine all the different groups.
         // Events belong to the groups it specifies; if no group specified then it belongs to
-        // its own group (its type).
+        // its own group (its name).
         Y.Array.each(events, function (event) {
-            var groupArray = event.group || event['class'] || event.type;
+            var groupArray = event.group || event.name;
 
             groupArray = Y.Lang.isArray(groupArray) ? groupArray : [groupArray];
             // All events belong to the 'All Events' group.
