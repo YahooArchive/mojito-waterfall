@@ -18,6 +18,7 @@ YUI.add('mojito-waterfall-time', function (Y, NAME) {
             'us',
             'ms',
             's',
+            'min',
             'h'
         ],
 
