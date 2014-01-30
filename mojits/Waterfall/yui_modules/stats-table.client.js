@@ -55,8 +55,15 @@ YUI.add('mojito-waterfall-stats-table', function (Y, NAME) {
         });
         table.append(tbody);
 
+        legend.on('click', function () {
+            table.toggleView();
+        });
+
+        fieldset.append(legend);
+        fieldset.append(table);
+
         // Attach popup.
-        popup = new Y.mojito.Waterfall.Popup(table, 'tbody > tr', function (e, row) {
+        popup = new Y.mojito.Waterfall.Popup(fieldset, 'table > tbody > tr', function (e, row) {
             var summary = rows[row].summary;
             popup.node.set("innerHTML", "");
             if (!summary || summary.length === 0) {
@@ -86,13 +93,6 @@ YUI.add('mojito-waterfall-stats-table', function (Y, NAME) {
             popupSummary.append(tbody);
             popup.node.append(popupSummary);
         }, null, 'stat');
-
-        legend.on('click', function () {
-            table.toggleView();
-        });
-
-        fieldset.append(legend);
-        fieldset.append(table);
 
         return fieldset;
     }
