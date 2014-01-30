@@ -21,7 +21,6 @@ YUI.add('mojito-waterfall-summary-popup', function (Y, NAME) {
             eventsSummaryNodes = [],
             isProfileSummary = false,
             timelineColumn = waterfallTable.one('tbody > tr > td.timeline .timeline-length'),
-            timelineColumnPadding = timelineColumn.getStyle('paddingRight').replace('px', ''),
             timelineColumnWidth,
             timelineColumnLeft,
             popup;
@@ -143,7 +142,7 @@ YUI.add('mojito-waterfall-summary-popup', function (Y, NAME) {
             timelineColumnWidth = timelineColumn.get('offsetWidth');
 
             // Determine if close to events
-            var pixelWidth = timelineColumnWidth - timelineColumnPadding,//timelineColumn.get('offsetWidth') - timelineColumn.getStyle('paddingRight').replace('px', ''),
+            var pixelWidth = timelineColumnWidth,//timelineColumn.get('offsetWidth') - timelineColumn.getStyle('paddingRight').replace('px', ''),
                 left = timelineColumnLeft,//timelineColumn.getX(),
                 eventDistances = [],
                 closeEvents = [];
@@ -185,8 +184,8 @@ YUI.add('mojito-waterfall-summary-popup', function (Y, NAME) {
 
         function isOverProfile(mouseX, row) {
             var summary = summaries[row],
-                pixelWidth = timelineColumnWidth - timelineColumnPadding,//timelineColumn.get('offsetWidth') - timelineColumn.getStyle('paddingRight').replace('px', ''),
-                left = timelineColumnLeft,//timelineColumn.getX(),
+                pixelWidth = timelineColumnWidth,
+                left = timelineColumnLeft,
                 profileStartX = summary.startTime * pixelWidth / timeWidth,
                 profileEndX = summary.endTime * pixelWidth / timeWidth;
 
