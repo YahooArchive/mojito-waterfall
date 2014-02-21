@@ -33,7 +33,7 @@ var waterfall = new Waterfall({
     });
 ```
 
-<h2/>
+<h2></h2>
 
 <a name="start" href="#start">**waterfall.start**</a> (profile, data) Marks the start of the given profile.
 * **profile** `string` The path of the profile which just started (see [Profile Paths](#profile-path)).
