@@ -1,6 +1,6 @@
 {
     "name": "mojito-waterfall",
-    "version": "0.0.10",
+    "version": "0.0.11",
     "description": "Performance data gathering and visualization.",
     "author": "Albert Jimenez <jimenez@yahoo-inc.com>",
     "main": "waterfall",
