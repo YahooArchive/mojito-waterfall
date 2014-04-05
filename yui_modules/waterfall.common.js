@@ -291,7 +291,7 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
         });
 
         if (waterfall.stats.totalDuration) {
-            statStr += 'Total Execution Time: ' + Time.timeToString(waterfall.stats.totalDuration, 4) + '\n';
+            statStr += 'Total Execution Time: ' + Time.timeToString(waterfall.stats.totalDuration + waterfall.units, 4) + '\n';
         }
 
         return statStr;
