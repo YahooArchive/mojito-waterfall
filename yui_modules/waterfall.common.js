@@ -107,6 +107,7 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
             Y.mix(profile.data, setData.data, true, null, 0, true);
 
             this.name = profile.data.name || this.name;
+            profile.data.name = profile.data.name || this.name;
         },
 
         /**
