@@ -354,8 +354,8 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
                     });
                     row.endTime = row.endTime || endTime;
 
-                    minTime = Math.min(minTime, row.startTime) || row.startTime;
-                    maxTime = Math.max(maxTime, row.endTime) || row.endTime;
+                    minTime = minTime !== undefined ? Math.min(minTime, row.startTime) : row.startTime;
+                    maxTime = maxTime !== undefined ? Math.max(maxTime, row.endTime) : row.endTime;
 
                     addStat(row, row.endTime - row.startTime, root || row.Name);
                     getStats(row.details, root || row.Name);
@@ -424,8 +424,8 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
         });
 
         Y.Array.each(waterfall.events, function (event) {
-            minTime = Math.min(event.time, minTime) || minTime;
-            maxTime = Math.max(event.time, maxTime) || maxTime;
+            minTime = minTime !== undefined ? Math.min(event.time, minTime) : minTime;
+            maxTime = maxTime !== undefined ? Math.max(event.time, maxTime) : maxTime;
         });
 
         stats.totalDuration = maxTime - minTime;
