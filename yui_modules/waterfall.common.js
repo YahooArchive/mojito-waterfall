@@ -237,65 +237,87 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
 
         waterfall.stats = waterfall.stats || Waterfall.computeStats(waterfall);
 
-        var columnWidths = [],
-            i,
-            headerRow,
-            row,
-            statStr;
+        var summary = '',
+            events = {},
+            tableStr = function (table, columns) {
+                var columnWidths = [],
+                    i,
+                    headerRow,
+                    row,
+                    str;
 
-        Y.Object.each(waterfall.stats, function (stat, statName) {
-            if (!Y.Lang.isObject(stat)) {
-                return;
-            }
-            Y.Array.each(STATS_TYPES, function (statType, column) {
-                columnWidths[column] = Math.max(String(stat[statType]).length, columnWidths[column] || statType.length);
-            });
-        });
+                Y.Object.each(table, function (values) {
+                    if (!Y.Lang.isObject(values)) {
+                        return;
+                    }
+                    Y.Array.each(columns, function (column, columnNum) {
+                        columnWidths[columnNum] = Math.max(String(values[column]).length, columnWidths[columnNum] || column.length);
+                    });
+                });
 
-        row = '+';
-        headerRow = '+';
+                row = '+';
+                headerRow = '+';
 
-        Y.Array.each(columnWidths, function (width) {
-            for (i = 0; i < width + 2; i++) {
-                row += '-';
-                headerRow += '=';
-            }
-            row += '+';
-            headerRow += '+';
-        });
+                Y.Array.each(columnWidths, function (width) {
+                    for (i = 0; i < width + 2; i++) {
+                        row += '-';
+                        headerRow += '=';
+                    }
+                    row += '+';
+                    headerRow += '+';
+                });
 
-        statStr = headerRow + '\n|';
+                str = headerRow + '\n|';
 
-        Y.Array.each(STATS_TYPES, function (statType, column) {
-            statStr += ' ' + statType + ' ';
-            for (i = statType.length; i < columnWidths[column]; i++) {
-                statStr += ' ';
-            }
-            statStr += '|';
-        });
+                Y.Array.each(columns, function (column, columnNum) {
+                    str += ' ' + column + ' ';
+                    for (i = column.length; i < columnWidths[columnNum]; i++) {
+                        str += ' ';
+                    }
+                    str += '|';
+                });
 
-        statStr += '\n' + headerRow + '\n';
+                str += '\n' + headerRow + '\n';
 
-        Y.Object.each(waterfall.stats, function (stat, statName) {
-            if (!Y.Lang.isObject(stat)) {
-                return;
-            }
-            statStr += '|';
-            Y.Array.each(STATS_TYPES, function (statType, column) {
-                statStr += ' ' + stat[statType] + ' ';
-                for (i = String(stat[statType]).length; i < columnWidths[column]; i++) {
-                    statStr += ' ';
+                Y.Object.each(table, function (values) {
+                    if (!Y.Lang.isObject(values)) {
+                        return;
+                    }
+                    str += '|';
+                    Y.Array.each(columns, function (column, columnNum) {
+                        str += ' ' + values[column] + ' ';
+                        for (i = String(values[column]).length; i < columnWidths[columnNum]; i++) {
+                            str += ' ';
+                        }
+                        str += '|';
+                    });
+                    str += '\n' + row + '\n';
+                });
+
+                return str;
+            };
+
+        if (waterfall.events.length > 0) {
+            Y.Array.each(waterfall.events, function (event) {
+                if (!events[event.name]) {
+                    events[event.name] = {
+                        Name: event.name,
+                        Calls: 1
+                    };
+                } else {
+                    events[event.name].Calls++;
                 }
-                statStr += '|';
             });
-            statStr += '\n' + row + '\n';
-        });
-
-        if (waterfall.stats.totalDuration) {
-            statStr += 'Total Execution Time: ' + Time.timeToString(waterfall.stats.totalDuration + waterfall.units, 4) + '\n';
+            summary += '\nEvents\n' + tableStr(events, ['Name', 'Calls']);
         }
 
-        return statStr;
+        summary += '\nStatistics\n' + tableStr(waterfall.stats, STATS_TYPES);
+
+        if (waterfall.stats.totalDuration) {
+            summary += 'Total Execution Time: ' + Time.timeToString(waterfall.stats.totalDuration + waterfall.units, 4) + '\n';
+        }
+
+        return summary;
     };
 
     Waterfall.computeStats = function (waterfall) {
@@ -319,7 +341,7 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
                 stats[name] = stats[name] || [];
                 stats[name].push({
                     duration: duration,
-                    root: root
+                    root: profile.root || root
                 });
             },
             getStats = function (rows, root) {
