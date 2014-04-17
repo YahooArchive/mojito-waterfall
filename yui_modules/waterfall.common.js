@@ -65,7 +65,7 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
     function Profile(profileKey, root) {
         this.profileKey = profileKey;
         this.id = profileKey.profiles[0];
-        this.name = this.id;
+        this.name = profileKey.profiles[profileKey.profiles.length - 1];
         this.durations = null;
         this.children = {};
         this.data = {};
