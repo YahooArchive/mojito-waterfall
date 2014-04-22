@@ -222,7 +222,7 @@ YUI.add('waterfall-tests', function (Y, NAME) {
 
             waterfallData = waterfall.getGui();
 
-            Assert.areSame(23, waterfall.getSummary().split('\n').length, 'Summary has an unexpected number of lines.');
+            Assert.areSame(36, waterfall.getSummary().split('\n').length, 'Summary has an unexpected number of lines.');
 
             this.verifyProfile(expectedRootProfile, waterfall._rootProfile);
             //this.verifyGUI(waterfallData);
