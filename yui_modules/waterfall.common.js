@@ -363,10 +363,6 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
                 Y.Array.each(rows, function (row) {
                     var name = row.Name,
                         endTime = row.startTime;
-                    if (names[name]) {
-                        row.Name = name + ' (' + names[name] + ')';
-                        names[name]++;
-                    }
 
                     Y.Array.each(row.durations, function (duration) {
                         endTime += duration.duration;
@@ -381,6 +377,11 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
 
                     addStat(row, row.endTime - row.startTime, root || row.Name);
                     getStats(row.details, root || row.Name);
+
+                    if (names[name]) {
+                        row.Name = name + ' (' + names[name] + ')';
+                        names[name]++;
+                    }
                 });
             };
 
@@ -735,7 +736,7 @@ YUI.add('mojito-waterfall', function (Y, NAME) {
                     Y.Array.each(profileArray, function (childProfile, index) {
                         var childRow;
 
-                        childProfile.data.Name = childProfile.data.Name || childProfile.name;
+                        childProfile.data.Name = childProfile.data.Name || childProfile.id;
 
                         childRow = createRows(childProfile, row.details);
                         profileStartTime = profileStartTime !== undefined ? profileStartTime : childRow.startTime;
