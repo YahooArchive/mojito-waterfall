@@ -10,11 +10,13 @@
 YUI.add('mojito-waterfall-action-context', function (Y, NAME) {
     'use strict';
 
-    function WaterfallActionContext(opts, waterfall, id) {
+    var libpath = require('path');
+
+    function WaterfallActionContext(opts, waterfall, path) {
         var action = opts.command.action || opts.command.instance.action || 'index';
 
         this.waterfall = waterfall;
-        this._id = id;
+        this._path = path;
 
         // Fake the controller with a noop such that we can call controller
         // ourselves in the waterfall dispatcher, otherwise the controller
@@ -32,8 +34,8 @@ YUI.add('mojito-waterfall-action-context', function (Y, NAME) {
             if (!more) {
                 // Once the controller has called ac.done the controller
                 // is considered finished and the rendering begins.
-                this.waterfall.end('/' + this._id + '/Controller');
-                this.waterfall.start('/' + this._id + '/Render', { level: 'mojito' });
+                this.waterfall.end(libpath.join(this._path, 'Controller'));
+                this.waterfall.start(libpath.join(this._path, 'Render'), { level: 'mojito' });
             }
 
             WaterfallActionContext.superclass.done.apply(this, arguments);
@@ -41,7 +43,7 @@ YUI.add('mojito-waterfall-action-context', function (Y, NAME) {
 
         error: function () {
             // The controller is considered finished once ac.error is called.
-            this.waterfall.end('/' + this.name + '/Controller');
+            this.waterfall.end(libpath.join(this._path, 'Controller'));
             WaterfallActionContext.superclass.error.apply(this, arguments);
         }
     });
