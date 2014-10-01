@@ -24,7 +24,7 @@ YUI.add('mojito-waterfall-gui', function (Y, NAME) {
         }
 
         // Append Waterfall stats table.
-        if (data.stats) {
+        if (Y.Object.size(data.stats) > 0) {
             container.append('<br/>');
             container.append(new Y.mojito.Waterfall.StatsTable(data.stats));
         }

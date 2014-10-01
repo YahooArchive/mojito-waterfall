@@ -19,13 +19,20 @@ YUI.add('mojito-waterfall-stats-table', function (Y, NAME) {
             tr,
             td,
             rows = [],
+            firstStat,
             popup,
             popupSummary;
 
         // Create header.
         thead = Y.Node.create("<thead/>");
         tr = Y.Node.create("<tr/>");
-        Y.Array.each(Object.keys(stats[Object.keys(stats)[0]]), function (header) {
+
+        firstStat = Y.Object.values(stats)[0];
+        if (!Y.Lang.isObject(firstStat)) {
+            return;
+        }
+
+        Y.Array.each(Y.Object.keys(firstStat), function (header) {
             if (header === "summary") {
                 return;
             }

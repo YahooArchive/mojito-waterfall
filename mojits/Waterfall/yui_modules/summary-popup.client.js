@@ -121,7 +121,7 @@ YUI.add('mojito-waterfall-summary-popup', function (Y, NAME) {
 
                 // events
                 Y.Array.each(enabledEvents, function (event) {
-                    var relativeTime = event.time - summaries[row].startTime;
+                    var relativeTime = event.time - (summaries[row].startTime + absoluteStartTime);
                     tr = Y.Node.create("<tr class='breakdown'></tr>");
                     tr.append("<td><div class='event-color' style='border-left: 2px solid " + event.color + "'/></td>");
                     tr.append("<td class='time'>" + (relativeTime > 0 ? "+" : "") + Time.timeToString(relativeTime + units, 3) + "</td>");
