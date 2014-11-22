@@ -46,6 +46,7 @@ YUI.add('mojito-waterfall-dispatcher', function (Y, NAME) {
                 this.waterfall.start(libpath.join(path, 'Controller'), {level: 'mojito'});
                 controller[ac.action](ac);
             } catch (e) {
+                this.waterfall.end(libpath.join(path, 'Controller'));
                 Y.log('Error from dispatch on instance \'' +
                     (command.instance.id || '@' + command.instance.type) +
                     '\':', 'error', NAME);
@@ -67,22 +68,33 @@ YUI.add('mojito-waterfall-dispatcher', function (Y, NAME) {
                 path;
 
             command.instance.waterfall = command.instance.waterfall || {};
+            Y.mix(command.instance.waterfall, {Name: name, level: 'mojit'});
+
             path = command.instance.waterfall.path || '';
             path = libpath.join(path, '/' + id);
 
             command.instance.waterfall.path = path;
 
-            my.waterfall.start(path);
+            my.waterfall.start(path, command.instance.waterfall);
 
-            adapter.done = function (data, meta) {
-                Y.mix(command.instance.waterfall, {Name: name, level: 'mojit'});
-                Y.mix(command.instance.waterfall, meta.waterfall, true);
+            adapter.done = (function (adapterDone) {
+                return function (data, meta) {
 
-                my.waterfall.end(libpath.join(path, 'Render'));
-                my.waterfall.end(path, command.instance.waterfall);
-                delete meta.waterfall;
-                done.apply(this, arguments);
-            }.bind(adapter);
+                    Y.mix(command.instance.waterfall, meta.waterfall, true);
+
+                    my.waterfall.end(libpath.join(path, 'Render'));
+                    my.waterfall.end(path);
+                    delete meta.waterfall;
+                    return adapterDone.apply(adapter, arguments);
+                };
+            }(adapter.done));
+
+            adapter.error = (function (adapterError) {
+                return function () {
+                    my.waterfall.end(path);
+                    return adapterError.apply(adapter, arguments);
+                };
+            }(adapter.error));
 
             // HookSystem::StartBlock
             Y.mojito.hooks.hook('dispatch', adapter.hook, 'start', command);
@@ -90,11 +102,13 @@ YUI.add('mojito-waterfall-dispatcher', function (Y, NAME) {
             try {
                 store.validateContext(command.context);
             } catch (err) {
+                my.waterfall.end(path);
                 adapter.error(err);
                 return;
             }
 
             if (command.rpc) {
+                my.waterfall.end(path);
                 // forcing to dispatch command through RPC tunnel
                 this.rpc(command, adapter);
                 return;
